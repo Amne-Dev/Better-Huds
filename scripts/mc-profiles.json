@@ -1,0 +1,26 @@
+[
+  {
+    "name": "1.21.x (custom patch)",
+    "minecraft_version": "",
+    "fabric_api_version": "",
+    "loader_version": "0.18.4"
+  },
+  {
+    "name": "1.21.10",
+    "minecraft_version": "1.21.10",
+    "fabric_api_version": "0.138.4+1.21.10",
+    "loader_version": "0.18.4"
+  },
+  {
+    "name": "1.21.9",
+    "minecraft_version": "1.21.9",
+    "fabric_api_version": "0.134.1+1.21.9",
+    "loader_version": "0.18.4"
+  },
+  {
+    "name": "1.21.11 (project default)",
+    "minecraft_version": "1.21.11",
+    "fabric_api_version": "0.141.3+1.21.11",
+    "loader_version": "0.18.4"
+  }
+]
