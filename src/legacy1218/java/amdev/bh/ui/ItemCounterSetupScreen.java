@@ -8,7 +8,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -61,7 +60,7 @@ public class ItemCounterSetupScreen extends Screen {
 
 		amountBox = new EditBox(font, panelX + 280, panelY + 100, 120, 20, Component.translatable("screen.better-huds.item_counter_amount"));
 		amountBox.setValue(Integer.toString(currentTarget));
-		McCompat.setEditBoxFilter(amountBox, text -> text.matches("[0-9]*"));
+		amountBox.setFilter(text -> text.matches("[0-9]*"));
 		addRenderableWidget(amountBox);
 
 		addRenderableWidget(new GlassButton(panelX + panelWidth - 88, panelY + 8, 74, 20, Component.translatable("screen.better-huds.back"), button -> onClose()));
@@ -184,11 +183,11 @@ public class ItemCounterSetupScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (super.mouseClicked(event, doubleClick)) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button)) {
 			return true;
 		}
-		return clickSuggestion(event.x(), event.y());
+		return clickSuggestion(mouseX, mouseY);
 	}
 
 	private boolean clickSuggestion(double mouseX, double mouseY) {
@@ -212,7 +211,7 @@ public class ItemCounterSetupScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+		if (McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
 			renderTransparentBackground(graphics);

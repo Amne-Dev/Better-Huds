@@ -59,6 +59,6 @@ public class PlayerInfoWidget implements HudWidget {
 			widgetConfig.textColor,
 			false
 		);
-		graphics.drawString(client.font, String.format("SPD %.2f VY %.2f  T%s", horizontalSpeed, verticalSpeed, WidgetRenderUtil.formatDurationSeconds(client.level.getDayTime() / 20L)), x, y + 15, widgetConfig.textColor, false);
+		graphics.drawString(client.font, String.format("SPD %.2f VY %.2f  T%s", horizontalSpeed, verticalSpeed, WidgetRenderUtil.formatDurationSeconds(McCompat.levelDayTime(client.level) / 20L)), x, y + 15, widgetConfig.textColor, false);
 	}
 }

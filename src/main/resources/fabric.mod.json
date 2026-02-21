@@ -3,7 +3,7 @@
 	"id": "better-huds",
 	"version": "${version}",
 	"name": "Better Huds",
-	"description": "A modular, draggable HUD mod with profiles and performance-friendly widgets.",
+	"description": "A modular, draggable HUD mod with profiles and performance-friendly widgets. Built for ${mc_compat_group} (target ${minecraft_version}).",
 	"authors": [
 		"amdev"
 	],
@@ -24,10 +24,17 @@
 	"mixins": [
 		"better-huds.mixins.json"
 	],
+	"custom": {
+		"build": {
+			"minecraft": "${minecraft_version}",
+			"compat_group": "${mc_compat_group}",
+			"profile": "${build_profile_name}"
+		}
+	},
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": ">=1.21.9 <1.22",
+		"fabricloader": "${fabric_loader_dependency}",
+		"minecraft": "${mc_dependency_range}",
 		"java": ">=21",
-		"fabric-api": "*"
+		"fabric-api": "${fabric_api_dependency}"
 	}
 }

@@ -5,9 +5,9 @@ import amdev.bh.config.ConfigManager;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.ui.HudEditorScreen;
 import amdev.bh.ui.widget.GlassButton;
+import amdev.bh.util.McCompat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 
@@ -30,14 +30,15 @@ public class BetterHudsClient implements ClientModInitializer {
 			int buttonWidth = 106;
 			int x = 8;
 			int y = scaledHeight - 28;
-			Screens.getButtons(screen).add(new GlassButton(
+			GlassButton editorButton = new GlassButton(
 				x,
 				y,
 				buttonWidth,
 				20,
 				Component.translatable("screen.better-huds.main_menu_editor"),
-				button -> client.setScreen(new HudEditorScreen(hudSystem))
-			));
+				btn -> client.setScreen(new HudEditorScreen(hudSystem))
+			);
+			McCompat.addButtonToScreen(screen, editorButton);
 		});
 	}
 

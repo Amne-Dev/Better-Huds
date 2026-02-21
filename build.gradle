@@ -3,11 +3,71 @@ plugins {
 	id 'maven-publish'
 }
 
-version = project.mod_version
+def sanitizeLabel = { String raw ->
+	def value = raw == null ? "" : raw.toString()
+	def normalized = value.replaceAll(/[^0-9A-Za-z.\-]/, "-")
+	return normalized.isEmpty() ? "unknown" : normalized
+}
+
+def buildMinecraftVersion = project.minecraft_version.toString()
+def buildCompatGroup = (findProperty("mc_compat_group") ?: buildMinecraftVersion).toString()
+def buildProfileName = (findProperty("build_profile_name") ?: buildCompatGroup).toString()
+def buildDependencyRange = (findProperty("mc_dependency_range") ?: buildMinecraftVersion).toString()
+def buildVersionLabel = sanitizeLabel((findProperty("build_version_label") ?: buildMinecraftVersion).toString())
+def fabricLoaderDependencyRange = (findProperty("fabric_loader_dependency") ?: ">=0.18.0").toString()
+def fabricApiDependencyRange = (findProperty("fabric_api_dependency") ?: "*").toString()
+def archiveCompatLabel = sanitizeLabel(buildCompatGroup)
+
+version = "${project.mod_version}+mc${buildVersionLabel}"
 group = project.maven_group
 
 base {
-	archivesName = project.archives_base_name
+	archivesName = "${project.archives_base_name}-mc${archiveCompatLabel}"
+}
+
+def isLegacy1218 = { String version ->
+	def matcher = (version =~ /^(\d+)\.(\d+)(?:\.(\d+))?.*$/)
+	if (!matcher.matches()) {
+		return false
+	}
+	int major = matcher.group(1) as int
+	int minor = matcher.group(2) as int
+	if (major != 1 || minor != 21) {
+		return false
+	}
+	String patchGroup = matcher.group(3)
+	int patch = patchGroup ? (patchGroup as int) : 0
+	return patch <= 8
+}
+
+def useLegacyInputUi = isLegacy1218(project.minecraft_version.toString())
+if (useLegacyInputUi) {
+	def legacyUiFiles = [
+		'amdev/bh/ui/HudEditorScreen.java',
+		'amdev/bh/ui/ColorPickerScreen.java',
+		'amdev/bh/ui/CrosshairDrawScreen.java',
+		'amdev/bh/ui/HudSettingsScreen.java',
+		'amdev/bh/ui/ItemCounterSetupScreen.java',
+		'amdev/bh/ui/widget/GlassButton.java'
+	]
+
+	sourceSets.main.java.srcDir 'src/legacy1218/java'
+	tasks.withType(JavaCompile).configureEach { task ->
+		task.setSource(files(
+			fileTree('src/main/java') {
+				exclude legacyUiFiles
+			},
+			fileTree('src/legacy1218/java')
+		))
+	}
+	tasks.matching { it.name == 'sourcesJar' }.configureEach { task ->
+		task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+		task.from(fileTree('src/main/java') {
+			exclude legacyUiFiles
+		})
+		task.from(fileTree('src/legacy1218/java'))
+	}
+	logger.lifecycle("Better Huds: enabling legacy UI input shims for Minecraft ${project.minecraft_version}")
 }
 
 repositories {
@@ -31,14 +91,33 @@ dependencies {
 
 processResources {
 	inputs.property "version", project.version
+	inputs.property "minecraft_version", buildMinecraftVersion
+	inputs.property "mc_compat_group", buildCompatGroup
+	inputs.property "mc_dependency_range", buildDependencyRange
+	inputs.property "build_profile_name", buildProfileName
+	inputs.property "fabric_loader_dependency", fabricLoaderDependencyRange
+	inputs.property "fabric_api_dependency", fabricApiDependencyRange
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand(
+			"version": inputs.properties.version,
+			"minecraft_version": inputs.properties.minecraft_version,
+			"mc_compat_group": inputs.properties.mc_compat_group,
+			"mc_dependency_range": inputs.properties.mc_dependency_range,
+			"build_profile_name": inputs.properties.build_profile_name,
+			"fabric_loader_dependency": inputs.properties.fabric_loader_dependency,
+			"fabric_api_dependency": inputs.properties.fabric_api_dependency
+		)
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
 	it.options.release = 21
+}
+
+tasks.withType(Test).configureEach {
+	// This project has no active JVM tests yet; don't fail multi-version builds.
+	failOnNoDiscoveredTests = false
 }
 
 java {

@@ -3,6 +3,7 @@ package amdev.bh.hud.widget;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -61,7 +62,7 @@ public class MiniInventoryWidget implements HudWidget {
 				int slotX = x + (col * 18);
 				int slotY = drawY + (row * 18);
 				boolean hotbarRow = showHotbar && row == 3;
-				boolean selected = hotbarRow && inventory != null && inventory.getSelectedSlot() == col;
+				boolean selected = hotbarRow && inventory != null && McCompat.selectedHotbarSlot(inventory) == col;
 				drawSlotFrame(graphics, slotX, slotY, selected);
 				if (inventory == null) {
 					continue;

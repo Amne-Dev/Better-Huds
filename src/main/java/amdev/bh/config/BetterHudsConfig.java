@@ -1,13 +1,21 @@
 package amdev.bh.config;
 
 import amdev.bh.hud.Anchor;
+import com.google.gson.Gson;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BetterHudsConfig {
+	private static final Gson GSON = new Gson();
+	private static final String DEFAULT_PROFILE_1_RESOURCE = "better-huds/default-profile-1.json";
 	public boolean hudEnabled = true;
 	public boolean hideWhenF1 = true;
 	public boolean hideInChat = false;
@@ -45,6 +53,11 @@ public class BetterHudsConfig {
 		WidgetConfig miniInventory1 = new WidgetConfig(-8, -86, Anchor.BOTTOM_RIGHT);
 		miniInventory1.showText = false;
 		profile1.widgets.put("mini_inventory", miniInventory1);
+		Profile bundledProfile1 = loadBundledProfile(DEFAULT_PROFILE_1_RESOURCE);
+		if (bundledProfile1 != null) {
+			profile1 = bundledProfile1;
+			profile1.name = "Profile 1";
+		}
 
 		Profile profile2 = new Profile("Profile 2");
 		profile2.widgets.put("armor", new WidgetConfig(-8, 8, Anchor.TOP_RIGHT));
@@ -127,6 +140,50 @@ public class BetterHudsConfig {
 		};
 	}
 
+	private static Profile loadBundledProfile(String resourcePath) {
+		try (InputStream stream = BetterHudsConfig.class.getClassLoader().getResourceAsStream(resourcePath)) {
+			if (stream == null) {
+				return null;
+			}
+			try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+				Profile profile = GSON.fromJson(reader, Profile.class);
+				if (profile == null) {
+					return null;
+				}
+				if (profile.name == null || profile.name.isBlank()) {
+					profile.name = "Profile 1";
+				}
+				if (profile.widgets == null) {
+					profile.widgets = new LinkedHashMap<>();
+				}
+				for (WidgetConfig widgetConfig : profile.widgets.values()) {
+					sanitizeWidget(widgetConfig);
+				}
+				return profile;
+			}
+		} catch (IOException | RuntimeException ignored) {
+			return null;
+		}
+	}
+
+	private static void sanitizeWidget(WidgetConfig widgetConfig) {
+		if (widgetConfig == null) {
+			return;
+		}
+		if (widgetConfig.anchor == null) {
+			widgetConfig.anchor = Anchor.TOP_LEFT;
+		}
+		if (widgetConfig.toggles == null) {
+			widgetConfig.toggles = new LinkedHashMap<>();
+		}
+		if (widgetConfig.values == null) {
+			widgetConfig.values = new LinkedHashMap<>();
+		}
+		if (widgetConfig.showText == null) {
+			widgetConfig.showText = true;
+		}
+	}
+
 	public int getGridSizeOrDefault() {
 		return Math.max(1, gridSize);
 	}
@@ -149,10 +206,11 @@ public class BetterHudsConfig {
 		public int x;
 		public int y;
 		public Anchor anchor = Anchor.TOP_LEFT;
+		public long lastModifiedAt = 0L;
 		public float scale = 1.0F;
 		public boolean background = true;
 		public Boolean showText = true;
-		public int backgroundColor = 0x66000000;
+		public int backgroundColor = 0xFF888888;
 		public int textColor = 0xFFFFFFFF;
 		public Map<String, Boolean> toggles = new LinkedHashMap<>();
 		public Map<String, Integer> values = new LinkedHashMap<>();
@@ -187,6 +245,7 @@ public class BetterHudsConfig {
 				toggles = new LinkedHashMap<>();
 			}
 			toggles.put(key, value);
+			touch();
 		}
 
 		public int intValue(String key, int defaultValue) {
@@ -201,6 +260,11 @@ public class BetterHudsConfig {
 				values = new LinkedHashMap<>();
 			}
 			values.put(key, value);
+			touch();
+		}
+
+		public void touch() {
+			lastModifiedAt = System.currentTimeMillis();
 		}
 	}
 }

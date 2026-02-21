@@ -1,12 +1,12 @@
 package amdev.bh.ui;
 
+import amdev.bh.util.McCompat;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.hud.widget.CrosshairPatternUtil;
 import amdev.bh.ui.widget.GlassButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -81,30 +81,30 @@ public class CrosshairDrawScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (super.mouseClicked(event, doubleClick)) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button)) {
 			return true;
 		}
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			return false;
 		}
-		boolean handled = applyToolAt(event.x(), event.y());
+		boolean handled = applyToolAt(mouseX, mouseY);
 		painting = handled;
 		return handled;
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (painting && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-			return applyToolAt(event.x(), event.y());
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (painting && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			return applyToolAt(mouseX, mouseY);
 		}
-		return super.mouseDragged(event, dragX, dragY);
+		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		painting = false;
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	private boolean applyToolAt(double mouseX, double mouseY) {
@@ -158,7 +158,7 @@ public class CrosshairDrawScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+		if (McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
 			renderTransparentBackground(graphics);

@@ -78,7 +78,11 @@ public class ProfileRenameScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		renderTransparentBackground(graphics);
+		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+			graphics.fill(0, 0, width, height, 0x66000000);
+		} else {
+			renderTransparentBackground(graphics);
+		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
 		graphics.drawString(font, title, panelX + 16, panelY + 16, 0xFFFFFFFF, false);
@@ -86,3 +90,4 @@ public class ProfileRenameScreen extends Screen {
 		super.render(graphics, mouseX, mouseY, tickDelta);
 	}
 }
+

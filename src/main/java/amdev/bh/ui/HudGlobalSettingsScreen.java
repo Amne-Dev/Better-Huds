@@ -40,7 +40,7 @@ public class HudGlobalSettingsScreen extends Screen {
 		labelBindings.clear();
 
 		panelWidth = Math.min(420, width - 20);
-		panelHeight = 216;
+		panelHeight = 244;
 		panelX = (width - panelWidth) / 2;
 		panelY = (height - panelHeight) / 2;
 
@@ -48,12 +48,16 @@ public class HudGlobalSettingsScreen extends Screen {
 
 		int y = panelY + 42;
 		addBoundButton(panelX + 14, y, 120,
-			() -> Component.translatable("screen.better-huds.settings.all_enabled", allEnabled() ? "ON" : "OFF"),
-			this::toggleAllEnabled);
+			() -> Component.translatable("screen.better-huds.settings.enable_all"),
+			() -> setAllEnabled(true));
 		addBoundButton(panelX + 142, y, 120,
+			() -> Component.translatable("screen.better-huds.settings.disable_all"),
+			() -> setAllEnabled(false));
+		addBoundButton(panelX + 270, y, 120,
 			() -> Component.translatable("screen.better-huds.settings.all_text", allTextVisible() ? "ON" : "OFF"),
 			this::toggleAllText);
-		addBoundButton(panelX + 270, y, 120,
+		y += 28;
+		addBoundButton(panelX + 14, y, 120,
 			() -> Component.translatable("screen.better-huds.settings.all_bg", allBackgroundEnabled() ? "ON" : "OFF"),
 			this::toggleAllBackground);
 
@@ -159,36 +163,45 @@ public class HudGlobalSettingsScreen extends Screen {
 		return getCfg(widgets.get(0).id()).backgroundColor;
 	}
 
-	private void toggleAllEnabled() {
-		boolean enable = !allEnabled();
+	private void setAllEnabled(boolean enable) {
 		for (HudWidget widget : hudSystem.widgets()) {
-			getCfg(widget.id()).enabled = enable;
+			BetterHudsConfig.WidgetConfig cfg = getCfg(widget.id());
+			cfg.enabled = enable;
+			cfg.touch();
 		}
 	}
 
 	private void toggleAllText() {
 		boolean show = !allTextVisible();
 		for (HudWidget widget : hudSystem.widgets()) {
-			getCfg(widget.id()).showText = show;
+			BetterHudsConfig.WidgetConfig cfg = getCfg(widget.id());
+			cfg.showText = show;
+			cfg.touch();
 		}
 	}
 
 	private void toggleAllBackground() {
 		boolean show = !allBackgroundEnabled();
 		for (HudWidget widget : hudSystem.widgets()) {
-			getCfg(widget.id()).background = show;
+			BetterHudsConfig.WidgetConfig cfg = getCfg(widget.id());
+			cfg.background = show;
+			cfg.touch();
 		}
 	}
 
 	private void applyAllTextColor(int next) {
 		for (HudWidget widget : hudSystem.widgets()) {
-			getCfg(widget.id()).textColor = next;
+			BetterHudsConfig.WidgetConfig cfg = getCfg(widget.id());
+			cfg.textColor = next;
+			cfg.touch();
 		}
 	}
 
 	private void applyAllBackgroundColor(int next) {
 		for (HudWidget widget : hudSystem.widgets()) {
-			getCfg(widget.id()).backgroundColor = next;
+			BetterHudsConfig.WidgetConfig cfg = getCfg(widget.id());
+			cfg.backgroundColor = next;
+			cfg.touch();
 		}
 	}
 
@@ -202,7 +215,11 @@ public class HudGlobalSettingsScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		renderTransparentBackground(graphics);
+		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+			graphics.fill(0, 0, width, height, 0x66000000);
+		} else {
+			renderTransparentBackground(graphics);
+		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
 		graphics.drawString(font, title, panelX + 14, panelY + 14, 0xFFFFFFFF, false);
@@ -213,3 +230,4 @@ public class HudGlobalSettingsScreen extends Screen {
 	private record LabelBinding(GlassButton button, Supplier<Component> labelSupplier) {
 	}
 }
+

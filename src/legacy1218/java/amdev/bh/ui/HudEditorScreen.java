@@ -1,5 +1,6 @@
 package amdev.bh.ui;
 
+import amdev.bh.util.McCompat;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.Anchor;
 import amdev.bh.hud.HudLayout;
@@ -8,8 +9,6 @@ import amdev.bh.hud.ResolvedWidget;
 import amdev.bh.ui.widget.GlassButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
@@ -26,6 +25,10 @@ public class HudEditorScreen extends Screen {
 	private int dragStartWidgetY;
 	private double dragDeltaX;
 	private double dragDeltaY;
+	private long lastLeftClickTimeMs;
+	private double lastLeftClickX;
+	private double lastLeftClickY;
+	private String lastLeftClickWidgetId;
 
 	public HudEditorScreen(HudSystem hudSystem) {
 		super(Component.translatable("screen.better-huds.editor"));
@@ -78,8 +81,8 @@ public class HudEditorScreen extends Screen {
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
-		int key = event.key();
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+		int key = keyCode;
 		if (key == GLFW.GLFW_KEY_ESCAPE) {
 			onClose();
 			return true;
@@ -88,7 +91,7 @@ public class HudEditorScreen extends Screen {
 		if (selectedWidgetId != null) {
 			BetterHudsConfig config = hudSystem.config();
 			BetterHudsConfig.WidgetConfig widgetConfig = config.getOrCreateWidgetConfig(selectedWidgetId);
-			boolean ignoreSnap = minecraft != null && minecraft.hasControlDown();
+			boolean ignoreSnap = Screen.hasControlDown();
 			int step = ignoreSnap ? 1 : config.getGridSizeOrDefault();
 			boolean moved = false;
 			if (key == GLFW.GLFW_KEY_LEFT) {
@@ -115,29 +118,28 @@ public class HudEditorScreen extends Screen {
 				int[] clamped = applyEdgeSnapAndClamp(selectedWidgetId, widgetConfig.x, widgetConfig.y, !ignoreSnap);
 				widgetConfig.x = clamped[0];
 				widgetConfig.y = clamped[1];
-				widgetConfig.touch();
 				hudSystem.configManager().save();
 				return true;
 			}
 		}
 
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (super.mouseClicked(event, doubleClick)) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button)) {
 			return true;
 		}
 
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			return false;
 		}
 
 		List<ResolvedWidget> widgets = hudSystem.getResolvedWidgets(false);
 		for (int i = widgets.size() - 1; i >= 0; i--) {
 			ResolvedWidget candidate = widgets.get(i);
-			if (!isInResizeHandle(candidate, event.x(), event.y())) {
+			if (!isInResizeHandle(candidate, mouseX, mouseY)) {
 				continue;
 			}
 			resizingWidgetId = candidate.widget().id();
@@ -146,14 +148,13 @@ public class HudEditorScreen extends Screen {
 			widgetConfig.anchor = Anchor.TOP_LEFT;
 			widgetConfig.x = candidate.x();
 			widgetConfig.y = candidate.y();
-			widgetConfig.touch();
 			return true;
 		}
 
 		ResolvedWidget hit = null;
 		for (int i = widgets.size() - 1; i >= 0; i--) {
 			ResolvedWidget candidate = widgets.get(i);
-			if (candidate.contains(event.x(), event.y())) {
+			if (candidate.contains(mouseX, mouseY)) {
 				hit = candidate;
 				break;
 			}
@@ -163,6 +164,8 @@ public class HudEditorScreen extends Screen {
 			return false;
 		}
 
+		boolean doubleClick = isWidgetDoubleClick(hit.widget().id(), mouseX, mouseY);
+		recordClick(hit.widget().id(), mouseX, mouseY);
 		if (doubleClick && minecraft != null) {
 			minecraft.setScreen(new WidgetSettingsScreen(hudSystem, this, settingsTargetWidgetId(hit.widget().id())));
 			return true;
@@ -174,7 +177,6 @@ public class HudEditorScreen extends Screen {
 		widgetConfig.anchor = Anchor.TOP_LEFT;
 		widgetConfig.x = hit.x();
 		widgetConfig.y = hit.y();
-		widgetConfig.touch();
 		dragStartWidgetX = widgetConfig.x;
 		dragStartWidgetY = widgetConfig.y;
 		dragDeltaX = 0.0D;
@@ -183,13 +185,13 @@ public class HudEditorScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (resizingWidgetId != null && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-			return resizeWidget(event);
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+		if (resizingWidgetId != null && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			return resizeWidget(mouseX, mouseY);
 		}
 
-		if (draggingWidgetId == null || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-			return super.mouseDragged(event, dragX, dragY);
+		if (draggingWidgetId == null || button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 		}
 
 		BetterHudsConfig config = hudSystem.config();
@@ -198,7 +200,7 @@ public class HudEditorScreen extends Screen {
 		dragDeltaY += dragY;
 		int newX = dragStartWidgetX + (int) Math.round(dragDeltaX);
 		int newY = dragStartWidgetY + (int) Math.round(dragDeltaY);
-		boolean ignoreSnap = minecraft != null && minecraft.hasControlDown();
+		boolean ignoreSnap = Screen.hasControlDown();
 
 		if (config.snapToGrid && !ignoreSnap) {
 			int grid = config.getGridSizeOrDefault();
@@ -211,24 +213,23 @@ public class HudEditorScreen extends Screen {
 
 		widgetConfig.x = newX;
 		widgetConfig.y = newY;
-		widgetConfig.touch();
 		return true;
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		if (draggingWidgetId != null || resizingWidgetId != null) {
 			draggingWidgetId = null;
 			resizingWidgetId = null;
 			hudSystem.configManager().save();
 			return true;
 		}
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+		if (McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
 			renderTransparentBackground(graphics);
@@ -279,7 +280,7 @@ public class HudEditorScreen extends Screen {
 		super.render(graphics, mouseX, mouseY, tickDelta);
 	}
 
-	private boolean resizeWidget(MouseButtonEvent event) {
+	private boolean resizeWidget(double mouseX, double mouseY) {
 		BetterHudsConfig config = hudSystem.config();
 		BetterHudsConfig.WidgetConfig widgetConfig = config.getOrCreateWidgetConfig(resizingWidgetId);
 		ResolvedWidget resolved = resolveWidget(resizingWidgetId);
@@ -290,18 +291,17 @@ public class HudEditorScreen extends Screen {
 		widgetConfig.anchor = Anchor.TOP_LEFT;
 		widgetConfig.x = resolved.x();
 		widgetConfig.y = resolved.y();
-		widgetConfig.touch();
 
 		int screenW = minecraft.getWindow().getGuiScaledWidth();
 		int screenH = minecraft.getWindow().getGuiScaledHeight();
-		int desiredW = (int) Math.round(event.x() - resolved.x());
-		int desiredH = (int) Math.round(event.y() - resolved.y());
+		int desiredW = (int) Math.round(mouseX - resolved.x());
+		int desiredH = (int) Math.round(mouseY - resolved.y());
 		int maxW = Math.max(8, screenW - resolved.x());
 		int maxH = Math.max(8, screenH - resolved.y());
 		desiredW = clamp(desiredW, 8, maxW);
 		desiredH = clamp(desiredH, 8, maxH);
 
-		boolean ignoreSnap = minecraft.hasControlDown();
+		boolean ignoreSnap = Screen.hasControlDown();
 		if (config.snapToGrid && !ignoreSnap) {
 			int grid = config.getGridSizeOrDefault();
 			desiredW = Math.max(8, HudLayout.snap(desiredW, grid));
@@ -313,8 +313,25 @@ public class HudEditorScreen extends Screen {
 		float targetApplied = Math.max(0.25F, Math.max(appliedW, appliedH));
 		float globalScale = Math.max(0.25F, config.globalScale);
 		widgetConfig.scale = round2(clamp(targetApplied / globalScale, 0.25F, 4.0F));
-		widgetConfig.touch();
 		return true;
+	}
+
+	private boolean isWidgetDoubleClick(String widgetId, double mouseX, double mouseY) {
+		if (widgetId == null || lastLeftClickWidgetId == null) {
+			return false;
+		}
+		long elapsed = System.currentTimeMillis() - lastLeftClickTimeMs;
+		if (elapsed > 250L || !widgetId.equals(lastLeftClickWidgetId)) {
+			return false;
+		}
+		return Math.abs(mouseX - lastLeftClickX) <= 4.0D && Math.abs(mouseY - lastLeftClickY) <= 4.0D;
+	}
+
+	private void recordClick(String widgetId, double mouseX, double mouseY) {
+		lastLeftClickWidgetId = widgetId;
+		lastLeftClickTimeMs = System.currentTimeMillis();
+		lastLeftClickX = mouseX;
+		lastLeftClickY = mouseY;
 	}
 
 	private int[] applyEdgeSnapAndClamp(String widgetId, int x, int y, boolean snapEdges) {
@@ -442,4 +459,3 @@ public class HudEditorScreen extends Screen {
 		return Math.round(value * 100.0F) / 100.0F;
 	}
 }
-

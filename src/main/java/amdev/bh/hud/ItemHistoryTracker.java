@@ -87,7 +87,7 @@ public class ItemHistoryTracker {
 		if (item == null || item == Items.AIR) {
 			return itemId;
 		}
-		return item.getName().getString();
+		return McCompat.itemDisplayName(item);
 	}
 
 	public Deque<ItemHistoryEvent> events() {

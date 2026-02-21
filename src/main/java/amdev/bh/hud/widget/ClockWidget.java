@@ -3,6 +3,7 @@ package amdev.bh.hud.widget;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -77,7 +78,7 @@ public class ClockWidget implements HudWidget {
 		if (client.level == null) {
 			return "--:--";
 		}
-		long dayTime = client.level.getDayTime() % 24000L;
+		long dayTime = McCompat.levelDayTime(client.level) % 24000L;
 		int hours = (int) ((dayTime / 1000L + 6L) % 24L);
 		int minutes = (int) Math.round((dayTime % 1000L) * 60.0D / 1000.0D);
 		if (minutes >= 60) {

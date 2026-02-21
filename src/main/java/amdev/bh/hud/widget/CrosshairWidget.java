@@ -3,11 +3,10 @@ package amdev.bh.hud.widget;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
-import com.mojang.blaze3d.opengl.GlStateManager;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.opengl.GL11;
 
 public class CrosshairWidget implements HudWidget {
 	@Override
@@ -46,13 +45,7 @@ public class CrosshairWidget implements HudWidget {
 	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean invert = widgetConfig.toggle("crosshair_invert", false);
 		if (invert) {
-			GlStateManager._enableBlend();
-			GlStateManager._blendFuncSeparate(
-				GL11.GL_ONE_MINUS_DST_COLOR,
-				GL11.GL_ZERO,
-				GL11.GL_ONE,
-				GL11.GL_ZERO
-			);
+			McCompat.enableInvertBlend();
 		}
 		try {
 			if (CrosshairPatternUtil.useDrawnPattern(widgetConfig)) {
@@ -85,13 +78,7 @@ public class CrosshairWidget implements HudWidget {
 			}
 		} finally {
 			if (invert) {
-				GlStateManager._blendFuncSeparate(
-					GL11.GL_SRC_ALPHA,
-					GL11.GL_ONE_MINUS_SRC_ALPHA,
-					GL11.GL_ONE,
-					GL11.GL_ZERO
-				);
-				GlStateManager._disableBlend();
+				McCompat.resetDefaultBlend();
 			}
 		}
 	}

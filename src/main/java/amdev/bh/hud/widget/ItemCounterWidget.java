@@ -75,7 +75,7 @@ public class ItemCounterWidget implements HudWidget {
 
 		graphics.renderItem(new ItemStack(tracked), iconX, y);
 		if (widgetConfig.showText()) {
-			String itemName = client.font.plainSubstrByWidth(tracked.getName().getString(), textMaxWidth);
+			String itemName = client.font.plainSubstrByWidth(McCompat.itemDisplayName(tracked), textMaxWidth);
 			String ratio = have + "/" + target;
 			if (alignRight) {
 				graphics.drawString(client.font, itemName, textRight - client.font.width(itemName), y + 1, textColor, false);

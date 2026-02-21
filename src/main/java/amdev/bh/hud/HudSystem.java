@@ -25,9 +25,10 @@ import amdev.bh.hud.widget.SurvivalWidget;
 import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.ui.HudEditorScreen;
 import amdev.bh.ui.ItemCounterSetupScreen;
+import amdev.bh.util.McCompat;
+import amdev.bh.util.PoseCompat;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -37,7 +38,6 @@ import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -105,30 +105,10 @@ public class HudSystem {
 	}
 
 	private void registerKeybinds() {
-		openEditorKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-			"key.better-huds.open_editor",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_RIGHT_SHIFT,
-			KeyMapping.Category.MISC
-		));
-		toggleHudKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-			"key.better-huds.toggle_hud",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_H,
-			KeyMapping.Category.MISC
-		));
-		setupItemCounterKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-			"key.better-huds.item_counter_setup",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_O,
-			KeyMapping.Category.MISC
-		));
-		toggleMiniInventoryKey = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-			"key.better-huds.mini_inventory",
-			InputConstants.Type.KEYSYM,
-			GLFW.GLFW_KEY_V,
-			KeyMapping.Category.MISC
-		));
+		openEditorKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.open_editor", GLFW.GLFW_KEY_RIGHT_SHIFT));
+		toggleHudKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.toggle_hud", GLFW.GLFW_KEY_H));
+		setupItemCounterKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.item_counter_setup", GLFW.GLFW_KEY_O));
+		toggleMiniInventoryKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.mini_inventory", GLFW.GLFW_KEY_V));
 	}
 
 	private void onClientTick(Minecraft client) {
@@ -143,10 +123,7 @@ public class HudSystem {
 			BetterHudsConfig config = config();
 			config.hudEnabled = !config.hudEnabled;
 			configManager.save();
-			client.player.displayClientMessage(
-				Component.translatable(config.hudEnabled ? "message.better-huds.hud_enabled" : "message.better-huds.hud_disabled"),
-				true
-			);
+			McCompat.displayClientMessage(client.player, Component.translatable(config.hudEnabled ? "message.better-huds.hud_enabled" : "message.better-huds.hud_disabled"), true);
 		}
 
 		while (openEditorKey.consumeClick()) {
@@ -209,9 +186,9 @@ public class HudSystem {
 		}
 
 		var pose = graphics.pose();
-		pose.pushMatrix();
-		pose.translate(resolved.x(), resolved.y());
-		pose.scale(resolved.appliedScale(), resolved.appliedScale());
+		PoseCompat.push(pose);
+		PoseCompat.translate(pose, resolved.x(), resolved.y());
+		PoseCompat.scale(pose, resolved.appliedScale(), resolved.appliedScale());
 
 		int backgroundColor = forcedBackground != 0 ? forcedBackground : resolved.widgetConfig().backgroundColor;
 		int borderColor = context.editorMode() ? 0xFF80D8FF : 0x88FFFFFF;
@@ -230,7 +207,7 @@ public class HudSystem {
 			graphics.fill(right - 1, top, right, bottom, borderColor);
 		}
 		resolved.widget().render(graphics, client, context, resolved.widgetConfig(), 0, 0);
-		pose.popMatrix();
+		PoseCompat.pop(pose);
 	}
 
 	public List<ResolvedWidget> getResolvedWidgets(boolean includeDisabled) {

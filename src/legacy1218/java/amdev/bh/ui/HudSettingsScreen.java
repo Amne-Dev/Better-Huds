@@ -1,5 +1,6 @@
 package amdev.bh.ui;
 
+import amdev.bh.util.McCompat;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.config.ProfileShareCodec;
 import amdev.bh.hud.HudSystem;
@@ -7,14 +8,12 @@ import amdev.bh.hud.HudWidget;
 import amdev.bh.ui.widget.GlassButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -36,12 +35,6 @@ public class HudSettingsScreen extends Screen {
 	private int profileMenuIndex = -1;
 	private int profileMenuX;
 	private int profileMenuY;
-	private WidgetFilter widgetFilter = WidgetFilter.ALL;
-	private WidgetSort widgetSort = WidgetSort.DEFAULT;
-	private boolean filterDropdownOpen;
-	private boolean sortDropdownOpen;
-	private GlassButton filterDropdownButton;
-	private GlassButton sortDropdownButton;
 	private Component noticeMessage = Component.empty();
 	private int noticeColor = 0xFFB6E3FF;
 	private long noticeUntilMs;
@@ -64,14 +57,8 @@ public class HudSettingsScreen extends Screen {
 		profileBounds.clear();
 		profileMenuVisible = false;
 		profileMenuIndex = -1;
-		filterDropdownOpen = false;
-		sortDropdownOpen = false;
-		filterDropdownButton = null;
-		sortDropdownButton = null;
 
 		List<HudWidget> widgets = hudSystem.widgets().stream().filter(widget -> !widget.id().equals("held_item")).toList();
-		List<HudWidget> filteredWidgets = new ArrayList<>(widgets.stream().filter(this::matchesFilter).toList());
-		sortWidgets(filteredWidgets);
 		int columns = 3;
 		int gap = 10;
 		int cardHeight = 82;
@@ -95,21 +82,13 @@ public class HudSettingsScreen extends Screen {
 				minecraft.setScreen(new HudKeybindsScreen(hudSystem, this));
 			}
 		}));
-		sortDropdownButton = addRenderableWidget(new GlassButton(contentX + 194, panelY + 8, 136, 20, sortDropdownLabel(), button -> {
-			sortDropdownOpen = !sortDropdownOpen;
-			filterDropdownOpen = false;
-		}));
-		filterDropdownButton = addRenderableWidget(new GlassButton(contentX + 334, panelY + 8, 112, 20, filterDropdownLabel(), button -> {
-			filterDropdownOpen = !filterDropdownOpen;
-			sortDropdownOpen = false;
-		}));
 
 		renderProfileButtons();
 
-		int startY = panelY + 64;
-		int rowsPerPage = Math.max(1, (panelHeight - 76) / (cardHeight + gap));
+		int startY = panelY + 58;
+		int rowsPerPage = Math.max(1, (panelHeight - 70) / (cardHeight + gap));
 		int pageSize = columns * rowsPerPage;
-		totalPages = Math.max(1, (int) Math.ceil(filteredWidgets.size() / (double) pageSize));
+		totalPages = Math.max(1, (int) Math.ceil(widgets.size() / (double) pageSize));
 		page = Math.max(0, Math.min(page, totalPages - 1));
 		if (totalPages > 1) {
 			addRenderableWidget(new GlassButton(contentX + contentWidth - 58, panelY + 32, 18, 16, Component.literal("<"), button -> {
@@ -124,9 +103,9 @@ public class HudSettingsScreen extends Screen {
 
 		int cardWidth = (contentWidth - 20 - ((columns - 1) * gap)) / columns;
 		int startIndex = page * pageSize;
-		int endIndex = Math.min(filteredWidgets.size(), startIndex + pageSize);
+		int endIndex = Math.min(widgets.size(), startIndex + pageSize);
 		for (int index = startIndex; index < endIndex; index++) {
-			HudWidget widget = filteredWidgets.get(index);
+			HudWidget widget = widgets.get(index);
 			int pageIndex = index - startIndex;
 			int column = pageIndex % columns;
 			int row = pageIndex / columns;
@@ -137,7 +116,6 @@ public class HudSettingsScreen extends Screen {
 			addRenderableWidget(new GlassButton(x + cardWidth - 70, y + 8, 60, 16, Component.literal(hudSystem.config().getOrCreateWidgetConfig(widget.id()).enabled ? "ON" : "OFF"), button -> {
 				var cfg = hudSystem.config().getOrCreateWidgetConfig(widget.id());
 				cfg.enabled = !cfg.enabled;
-				cfg.touch();
 				button.setMessage(Component.literal(cfg.enabled ? "ON" : "OFF"));
 				hudSystem.configManager().save();
 			}));
@@ -184,37 +162,9 @@ public class HudSettingsScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-			if (sortDropdownOpen) {
-				int hit = dropdownOptionAt(sortDropdownButton, event.x(), event.y(), WidgetSort.values().length);
-				if (hit >= 0) {
-					widgetSort = WidgetSort.values()[hit];
-					sortDropdownOpen = false;
-					init();
-					return true;
-				}
-				if (!isInsideDropdown(sortDropdownButton, event.x(), event.y(), WidgetSort.values().length)) {
-					sortDropdownOpen = false;
-				}
-			}
-			if (filterDropdownOpen) {
-				int hit = dropdownOptionAt(filterDropdownButton, event.x(), event.y(), WidgetFilter.values().length);
-				if (hit >= 0) {
-					widgetFilter = WidgetFilter.values()[hit];
-					filterDropdownOpen = false;
-					page = 0;
-					init();
-					return true;
-				}
-				if (!isInsideDropdown(filterDropdownButton, event.x(), event.y(), WidgetFilter.values().length)) {
-					filterDropdownOpen = false;
-				}
-			}
-		}
-
-		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-			ProfileBounds hit = profileAt(event.x(), event.y());
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+			ProfileBounds hit = profileAt(mouseX, mouseY);
 			if (hit != null) {
 				profileMenuVisible = true;
 				profileMenuIndex = hit.index();
@@ -226,14 +176,14 @@ public class HudSettingsScreen extends Screen {
 			profileMenuIndex = -1;
 		}
 
-		if (profileMenuVisible && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (profileMenuVisible && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
 			int menuWidth = 116;
 			int menuHeight = 56;
 			int menuX = clamp(profileMenuX, panelX + 2, panelX + panelWidth - menuWidth - 2);
 			int menuY = clamp(profileMenuY, panelY + 2, panelY + panelHeight - menuHeight - 2);
-			boolean inRename = event.x() >= menuX + 1 && event.x() < menuX + menuWidth - 1 && event.y() >= menuY + 1 && event.y() < menuY + 18;
-			boolean inDelete = event.x() >= menuX + 1 && event.x() < menuX + menuWidth - 1 && event.y() >= menuY + 20 && event.y() < menuY + 37;
-			boolean inExport = event.x() >= menuX + 1 && event.x() < menuX + menuWidth - 1 && event.y() >= menuY + 39 && event.y() < menuY + 56;
+			boolean inRename = mouseX >= menuX + 1 && mouseX < menuX + menuWidth - 1 && mouseY >= menuY + 1 && mouseY < menuY + 18;
+			boolean inDelete = mouseX >= menuX + 1 && mouseX < menuX + menuWidth - 1 && mouseY >= menuY + 20 && mouseY < menuY + 37;
+			boolean inExport = mouseX >= menuX + 1 && mouseX < menuX + menuWidth - 1 && mouseY >= menuY + 39 && mouseY < menuY + 56;
 			if (inRename) {
 				if (minecraft != null && profileMenuIndex >= 0) {
 					minecraft.setScreen(new ProfileRenameScreen(hudSystem, this, profileMenuIndex));
@@ -254,7 +204,7 @@ public class HudSettingsScreen extends Screen {
 			profileMenuVisible = false;
 		}
 
-		return super.mouseClicked(event, doubleClick);
+		return super.mouseClicked(mouseX, mouseY, button);
 	}
 
 	private void createProfileFromActive() {
@@ -340,7 +290,6 @@ public class HudSettingsScreen extends Screen {
 		copy.showText = source.showText;
 		copy.backgroundColor = source.backgroundColor;
 		copy.textColor = source.textColor;
-		copy.lastModifiedAt = source.lastModifiedAt;
 		copy.toggles = source.toggles == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.toggles);
 		copy.values = source.values == null ? new LinkedHashMap<>() : new LinkedHashMap<>(source.values);
 		return copy;
@@ -356,7 +305,7 @@ public class HudSettingsScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+		if (McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
 			renderTransparentBackground(graphics);
@@ -366,32 +315,16 @@ public class HudSettingsScreen extends Screen {
 
 		graphics.fill(panelX + sidebarWidth, panelY + 1, panelX + sidebarWidth + 1, panelY + panelHeight - 1, 0x5577AACC);
 		graphics.drawString(font, Component.translatable("screen.better-huds.settings.profiles"), panelX + 12, panelY + 14, 0xFFB6E3FF, false);
+
+		int titleX = contentX + (contentWidth - font.width(title)) / 2;
+		graphics.drawString(font, title, titleX, panelY + 14, 0xFFFFFFFF, false);
 		if (totalPages > 1) {
 			String pageLabel = (page + 1) + "/" + totalPages;
 			graphics.drawString(font, pageLabel, contentX + contentWidth - 102, panelY + 35, 0xFFB6E3FF, false);
 		}
-		int visibleCount = (int) hudSystem.widgets().stream().filter(widget -> !widget.id().equals("held_item") && matchesFilter(widget)).count();
-		int totalCount = (int) hudSystem.widgets().stream().filter(widget -> !widget.id().equals("held_item")).count();
-		graphics.drawString(
-			font,
-			Component.translatable("screen.better-huds.settings.showing", Integer.toString(visibleCount), Integer.toString(totalCount)),
-			contentX + 10,
-			panelY + 36,
-			0xFFB6E3FF,
-			false
-		);
+		graphics.drawString(font, Component.translatable("screen.better-huds.settings.grid_hint"), contentX + 10, panelY + 32, 0xFFB6E3FF, false);
 
 		Component hoveredInfoTip = null;
-		if (cards.isEmpty()) {
-			graphics.drawString(
-				font,
-				Component.translatable("screen.better-huds.settings.no_widgets_filter"),
-				contentX + 12,
-				panelY + 84,
-				0xFF9DB3C2,
-				false
-			);
-		}
 		for (Card card : cards) {
 			boolean enabled = hudSystem.config().getOrCreateWidgetConfig(card.widget().id()).enabled;
 			int border = enabled ? 0xFF80D8FF : 0x66777777;
@@ -452,8 +385,6 @@ public class HudSettingsScreen extends Screen {
 		}
 
 		super.render(graphics, mouseX, mouseY, tickDelta);
-		renderDropdown(graphics, sortDropdownButton, sortDropdownOpen, WidgetSort.values(), this::sortLabel, widgetSort.ordinal(), mouseX, mouseY);
-		renderDropdown(graphics, filterDropdownButton, filterDropdownOpen, WidgetFilter.values(), this::filterLabel, widgetFilter.ordinal(), mouseX, mouseY);
 		if (hoveredInfoTip != null) {
 			drawSimpleTooltip(graphics, hoveredInfoTip, mouseX, mouseY);
 		}
@@ -497,114 +428,6 @@ public class HudSettingsScreen extends Screen {
 		};
 	}
 
-	private boolean matchesFilter(HudWidget widget) {
-		boolean enabled = hudSystem.config().getOrCreateWidgetConfig(widget.id()).enabled;
-		return switch (widgetFilter) {
-			case ENABLED -> enabled;
-			case DISABLED -> !enabled;
-			default -> true;
-		};
-	}
-
-	private void sortWidgets(List<HudWidget> widgets) {
-		switch (widgetSort) {
-			case ALPHABETICAL -> widgets.sort(Comparator.comparing(widget -> widget.displayName().getString().toLowerCase()));
-			case RECENTLY_MODIFIED -> widgets.sort(Comparator.comparingLong((HudWidget widget) -> hudSystem.config().getOrCreateWidgetConfig(widget.id()).lastModifiedAt).reversed());
-			default -> {
-			}
-		}
-	}
-
-	private Component sortDropdownLabel() {
-		return Component.translatable("screen.better-huds.settings.sort_dropdown", sortLabel(widgetSort).getString());
-	}
-
-	private Component filterDropdownLabel() {
-		return Component.translatable("screen.better-huds.settings.filter_dropdown", filterLabel(widgetFilter).getString());
-	}
-
-	private Component sortLabel(WidgetSort option) {
-		return switch (option) {
-			case ALPHABETICAL -> Component.translatable("screen.better-huds.settings.sort_alpha");
-			case RECENTLY_MODIFIED -> Component.translatable("screen.better-huds.settings.sort_recent");
-			default -> Component.translatable("screen.better-huds.settings.sort_default");
-		};
-	}
-
-	private Component filterLabel(WidgetFilter option) {
-		return switch (option) {
-			case ENABLED -> Component.translatable("screen.better-huds.settings.filter_enabled");
-			case DISABLED -> Component.translatable("screen.better-huds.settings.filter_disabled");
-			default -> Component.translatable("screen.better-huds.settings.filter_all");
-		};
-	}
-
-	private <T> void renderDropdown(
-		GuiGraphics graphics,
-		GlassButton anchor,
-		boolean open,
-		T[] options,
-		java.util.function.Function<T, Component> labelProvider,
-		int selectedIndex,
-		int mouseX,
-		int mouseY
-	) {
-		if (!open || anchor == null) {
-			return;
-		}
-
-		int itemHeight = 18;
-		int x = anchor.getX();
-		int y = anchor.getY() + anchor.getHeight() + 2;
-		int w = anchor.getWidth();
-		int h = options.length * itemHeight;
-		graphics.fill(x, y, x + w, y + h, 0xE0101010);
-		graphics.fill(x, y, x + w, y + 1, 0xFF80D8FF);
-		graphics.fill(x, y + h - 1, x + w, y + h, 0xFF80D8FF);
-		graphics.fill(x, y, x + 1, y + h, 0xFF80D8FF);
-		graphics.fill(x + w - 1, y, x + w, y + h, 0xFF80D8FF);
-
-		for (int i = 0; i < options.length; i++) {
-			int rowY = y + i * itemHeight;
-			boolean hovered = mouseX >= x + 1 && mouseX < x + w - 1 && mouseY >= rowY && mouseY < rowY + itemHeight;
-			if (hovered || i == selectedIndex) {
-				int fill = i == selectedIndex ? 0x553A5F77 : 0x44304960;
-				graphics.fill(x + 1, rowY + 1, x + w - 1, rowY + itemHeight - 1, fill);
-			}
-			graphics.drawString(font, labelProvider.apply(options[i]), x + 6, rowY + 5, i == selectedIndex ? 0xFFDAFFC2 : 0xFFFFFFFF, false);
-		}
-	}
-
-	private int dropdownOptionAt(GlassButton anchor, double mouseX, double mouseY, int count) {
-		if (anchor == null) {
-			return -1;
-		}
-		int itemHeight = 18;
-		int x = anchor.getX();
-		int y = anchor.getY() + anchor.getHeight() + 2;
-		int w = anchor.getWidth();
-		int h = count * itemHeight;
-		if (mouseX < x || mouseX >= x + w || mouseY < y || mouseY >= y + h) {
-			return -1;
-		}
-		return (int) ((mouseY - y) / itemHeight);
-	}
-
-	private boolean isInsideDropdown(GlassButton anchor, double mouseX, double mouseY, int count) {
-		if (anchor == null) {
-			return false;
-		}
-		int itemHeight = 18;
-		int x = anchor.getX();
-		int y = anchor.getY() + anchor.getHeight() + 2;
-		int w = anchor.getWidth();
-		int h = count * itemHeight;
-		boolean inMenu = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + h;
-		boolean inAnchor = mouseX >= anchor.getX() && mouseX < anchor.getX() + anchor.getWidth()
-			&& mouseY >= anchor.getY() && mouseY < anchor.getY() + anchor.getHeight();
-		return inMenu || inAnchor;
-	}
-
 	private static int clamp(int value, int min, int max) {
 		return Math.max(min, Math.min(max, value));
 	}
@@ -635,17 +458,4 @@ public class HudSettingsScreen extends Screen {
 
 	private record ProfileBounds(int index, int x, int y, int width, int height) {
 	}
-
-	private enum WidgetFilter {
-		ALL,
-		ENABLED,
-		DISABLED
-	}
-
-	private enum WidgetSort {
-		DEFAULT,
-		ALPHABETICAL,
-		RECENTLY_MODIFIED
-	}
 }
-

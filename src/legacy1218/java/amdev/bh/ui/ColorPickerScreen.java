@@ -1,13 +1,13 @@
 package amdev.bh.ui;
 
-import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.util.McCompat;
+import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.ui.widget.GlassButton;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.function.IntConsumer;
 
@@ -80,7 +80,7 @@ public class ColorPickerScreen extends Screen {
 
 		hexBox = new EditBox(font, panelX + 180, panelY + 252, 154, 20, Component.translatable("screen.better-huds.color_picker.hex"));
 		hexBox.setMaxLength(9);
-		McCompat.setEditBoxFilter(hexBox, text -> text.matches("#?[0-9a-fA-F]*"));
+		hexBox.setFilter(text -> text.matches("#?[0-9a-fA-F]*"));
 		hexBox.setResponder(this::onHexInputChanged);
 		updateHexField();
 		addRenderableWidget(hexBox);
@@ -137,52 +137,55 @@ public class ColorPickerScreen extends Screen {
 	}
 
 	@Override
-	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (super.mouseClicked(event, doubleClick)) {
+	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (super.mouseClicked(mouseX, mouseY, button)) {
 			return true;
+		}
+		if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+			return false;
 		}
 
-		if (isInsideHueRing(event.x(), event.y())) {
+		if (isInsideHueRing(mouseX, mouseY)) {
 			draggingHue = true;
-			updateHueFromMouse(event.x(), event.y());
+			updateHueFromMouse(mouseX, mouseY);
 			return true;
 		}
-		if (isInsideSvSquare(event.x(), event.y())) {
+		if (isInsideSvSquare(mouseX, mouseY)) {
 			draggingSv = true;
-			updateSvFromMouse(event.x(), event.y());
+			updateSvFromMouse(mouseX, mouseY);
 			return true;
 		}
-		if (isInsideAlphaBar(event.x(), event.y())) {
+		if (isInsideAlphaBar(mouseX, mouseY)) {
 			draggingAlpha = true;
-			updateAlphaFromMouse(event.x());
+			updateAlphaFromMouse(mouseX);
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+	public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
 		if (draggingHue) {
-			updateHueFromMouse(event.x(), event.y());
+			updateHueFromMouse(mouseX, mouseY);
 			return true;
 		}
 		if (draggingSv) {
-			updateSvFromMouse(event.x(), event.y());
+			updateSvFromMouse(mouseX, mouseY);
 			return true;
 		}
 		if (draggingAlpha) {
-			updateAlphaFromMouse(event.x());
+			updateAlphaFromMouse(mouseX);
 			return true;
 		}
-		return super.mouseDragged(event, dragX, dragY);
+		return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
 	}
 
 	@Override
-	public boolean mouseReleased(MouseButtonEvent event) {
+	public boolean mouseReleased(double mouseX, double mouseY, int button) {
 		draggingHue = false;
 		draggingSv = false;
 		draggingAlpha = false;
-		return super.mouseReleased(event);
+		return super.mouseReleased(mouseX, mouseY, button);
 	}
 
 	private boolean isInsideHueRing(double mouseX, double mouseY) {
@@ -236,7 +239,7 @@ public class ColorPickerScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
-		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
+		if (McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
 			renderTransparentBackground(graphics);
