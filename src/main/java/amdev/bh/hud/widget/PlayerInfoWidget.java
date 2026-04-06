@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -33,7 +33,7 @@ public class PlayerInfoWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		Player player = client.player;
 		if (player == null || client.level == null) {
 			return;
@@ -51,7 +51,7 @@ public class PlayerInfoWidget implements HudWidget {
 			return;
 		}
 
-		graphics.drawString(
+		graphics.text(
 			client.font,
 			String.format("X%.1f Y%.1f Z%.1f %s  B:%s L:%d", player.getX(), player.getY(), player.getZ(), facing, biome, light),
 			x,
@@ -59,6 +59,6 @@ public class PlayerInfoWidget implements HudWidget {
 			widgetConfig.textColor,
 			false
 		);
-		graphics.drawString(client.font, String.format("SPD %.2f VY %.2f  T%s", horizontalSpeed, verticalSpeed, WidgetRenderUtil.formatDurationSeconds(McCompat.levelDayTime(client.level) / 20L)), x, y + 15, widgetConfig.textColor, false);
+		graphics.text(client.font, String.format("SPD %.2f VY %.2f  T%s", horizontalSpeed, verticalSpeed, WidgetRenderUtil.formatDurationSeconds(McCompat.levelDayTime(client.level) / 20L)), x, y + 15, widgetConfig.textColor, false);
 	}
 }

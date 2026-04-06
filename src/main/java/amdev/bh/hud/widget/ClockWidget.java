@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 import java.time.LocalTime;
@@ -42,7 +42,7 @@ public class ClockWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean showReal = widgetConfig.toggle("clock_real", true);
 		boolean showGame = widgetConfig.toggle("clock_game", true);
 		if (!showReal && !showGame) {
@@ -71,7 +71,7 @@ public class ClockWidget implements HudWidget {
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 809);
 		String out = text.toString();
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(out)) / 2);
-		graphics.drawString(client.font, out, drawX, y + 3, color, false);
+		graphics.text(client.font, out, drawX, y + 3, color, false);
 	}
 
 	private static String formatGameTime(Minecraft client) {

@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.hud.widget.CrosshairPatternUtil;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -60,13 +60,13 @@ public class CrosshairDrawScreen extends Screen {
 			hudSystem.configManager().save();
 		}));
 		x += 72;
-		addRenderableWidget(new GlassButton(x, topY, 76, 20, Component.translatable("screen.better-huds.crosshair_draw.grid", Integer.toString(CrosshairPatternUtil.gridSize(cfg()))), button -> {
-			int next = CrosshairPatternUtil.gridSize(cfg()) == CrosshairPatternUtil.GRID_SMALL ? CrosshairPatternUtil.GRID_LARGE : CrosshairPatternUtil.GRID_SMALL;
+		addRenderableWidget(new GlassButton(x, topY, 92, 20, Component.translatable("screen.better-huds.crosshair_draw.grid", canvasLabel(CrosshairPatternUtil.gridSize(cfg()))), button -> {
+			int next = CrosshairPatternUtil.nextGridSize(CrosshairPatternUtil.gridSize(cfg()));
 			CrosshairPatternUtil.setGridSize(cfg(), next);
 			hudSystem.configManager().save();
 			init();
 		}));
-		x += 82;
+		x += 98;
 		addRenderableWidget(new GlassButton(x, topY, 102, 20, Component.translatable(
 			"screen.better-huds.crosshair_draw.use_drawn",
 			CrosshairPatternUtil.useDrawnPattern(cfg()) ? "ON" : "OFF"
@@ -138,7 +138,7 @@ public class CrosshairDrawScreen extends Screen {
 	private void recalculateGridBounds() {
 		int grid = CrosshairPatternUtil.gridSize(cfg());
 		int available = Math.min(panelWidth - 24, panelHeight - 120);
-		cellSize = Math.max(8, Math.min(22, available / grid));
+		cellSize = Math.max(4, Math.min(22, Math.max(1, available / grid)));
 		int total = grid * cellSize;
 		gridX = panelX + (panelWidth - total) / 2;
 		gridY = panelY + 72;
@@ -157,22 +157,22 @@ public class CrosshairDrawScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
-		graphics.drawString(font, title, panelX + 14, panelY + 15, 0xFFFFFFFF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.crosshair_draw.hint"), panelX + 14, panelY + panelHeight - 16, 0xFFB6E3FF, false);
+		graphics.text(font, title, panelX + 14, panelY + 15, 0xFFFFFFFF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.crosshair_draw.hint"), panelX + 14, panelY + panelHeight - 16, 0xFFB6E3FF, false);
 
 		renderGrid(graphics, mouseX, mouseY);
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 
-	private void renderGrid(GuiGraphics graphics, int mouseX, int mouseY) {
+	private void renderGrid(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
 		BetterHudsConfig.WidgetConfig widgetCfg = cfg();
 		int grid = CrosshairPatternUtil.gridSize(widgetCfg);
 		int total = grid * cellSize;
@@ -192,7 +192,7 @@ public class CrosshairDrawScreen extends Screen {
 		for (int i = 0; i <= grid; i++) {
 			int gx = gridX + i * cellSize;
 			int gy = gridY + i * cellSize;
-			int lineColor = i == grid / 2 ? 0xAA80D8FF : 0x445A7A95;
+			int lineColor = ((grid & 1) == 0 && i == grid / 2) ? 0xAA80D8FF : 0x445A7A95;
 			graphics.fill(gx, gridY, gx + 1, gridY + total, lineColor);
 			graphics.fill(gridX, gy, gridX + total, gy + 1, lineColor);
 		}
@@ -200,6 +200,18 @@ public class CrosshairDrawScreen extends Screen {
 		graphics.fill(gridX, gridY + total - 1, gridX + total, gridY + total, 0xFF80D8FF);
 		graphics.fill(gridX, gridY, gridX + 1, gridY + total, 0xFF80D8FF);
 		graphics.fill(gridX + total - 1, gridY, gridX + total, gridY + total, 0xFF80D8FF);
+		if ((grid & 1) != 0) {
+			int centerCell = grid / 2;
+			int centerLeft = gridX + centerCell * cellSize;
+			int centerTop = gridY + centerCell * cellSize;
+			int centerRight = centerLeft + cellSize;
+			int centerBottom = centerTop + cellSize;
+			graphics.fill(centerLeft, centerTop, centerRight, centerBottom, 0x1E80D8FF);
+			graphics.fill(centerLeft, centerTop, centerRight, centerTop + 1, 0xFF80D8FF);
+			graphics.fill(centerLeft, centerBottom - 1, centerRight, centerBottom, 0xFF80D8FF);
+			graphics.fill(centerLeft, centerTop, centerLeft + 1, centerBottom, 0xFF80D8FF);
+			graphics.fill(centerRight - 1, centerTop, centerRight, centerBottom, 0xFF80D8FF);
+		}
 
 		// Draw active pixels last so adjacent pixels are flush with no visible spacing.
 		for (int y = 0; y < grid; y++) {
@@ -224,9 +236,12 @@ public class CrosshairDrawScreen extends Screen {
 		}
 	}
 
+	private static String canvasLabel(int gridSize) {
+		return gridSize + "x" + gridSize;
+	}
+
 	private enum Tool {
 		PEN,
 		ERASER
 	}
 }
-

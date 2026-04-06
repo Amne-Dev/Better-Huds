@@ -7,7 +7,7 @@ import amdev.bh.util.McCompat;
 import amdev.bh.util.PoseCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class KeystrokesWidget implements HudWidget {
@@ -61,7 +61,7 @@ public class KeystrokesWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		Options options = client.options;
 		boolean showText = widgetConfig.showText();
 		boolean showCps = widgetConfig.toggle("show_cps", true);
@@ -88,23 +88,23 @@ public class KeystrokesWidget implements HudWidget {
 		String dLabel = showText ? (symbolLabels ? "\u25B6" : "D") : "";
 
 		int centerX = leftX + size + gap;
-		drawKey(graphics, client, centerX, rowY, size, size, wLabel, null, false, McCompat.optionsKeyDown(options, "keyUp", "keyForward"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, centerX, rowY, size, size, wLabel, null, false, keyDown(options.keyUp), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
 		rowY += size + gap;
 
-		drawKey(graphics, client, leftX, rowY, size, size, aLabel, null, false, McCompat.optionsKeyDown(options, "keyLeft"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
-		drawKey(graphics, client, centerX, rowY, size, size, sLabel, null, false, McCompat.optionsKeyDown(options, "keyDown", "keyBack"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
-		drawKey(graphics, client, leftX + (2 * (size + gap)), rowY, size, size, dLabel, null, false, McCompat.optionsKeyDown(options, "keyRight"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, leftX, rowY, size, size, aLabel, null, false, keyDown(options.keyLeft), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, centerX, rowY, size, size, sLabel, null, false, keyDown(options.keyDown), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, leftX + (2 * (size + gap)), rowY, size, size, dLabel, null, false, keyDown(options.keyRight), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
 		rowY += size + gap;
 
 		boolean spaceLine = showText && symbolLabels;
 		String spaceLabel = showText ? (symbolLabels ? "" : "SPACE") : "";
-		drawKey(graphics, client, leftX, rowY, wide, spaceHeight, spaceLabel, null, spaceLine, McCompat.optionsKeyDown(options, "keyJump"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, leftX, rowY, wide, spaceHeight, spaceLabel, null, spaceLine, keyDown(options.keyJump), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
 		rowY += spaceHeight;
 
 		int halfWidth = (wide - gap) / 2;
 		if (showModifiers) {
 			rowY += gap;
-			drawKey(graphics, client, leftX, rowY, halfWidth, size, showText ? "SHIFT" : "", null, false, McCompat.optionsKeyDown(options, "keyShift", "keySneak"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+			drawKey(graphics, client, leftX, rowY, halfWidth, size, showText ? "SHIFT" : "", null, false, keyDown(options.keyShift), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
 			drawKey(graphics, client, leftX + halfWidth + gap, rowY, halfWidth, size, showText ? "CTRL" : "", null, false, McCompat.isControlDown(client), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
 			rowY += size;
 		}
@@ -116,12 +116,16 @@ public class KeystrokesWidget implements HudWidget {
 		int mouseHeight = size;
 		String lSub = showText && showCps ? context.metrics().leftCps() + " CPS" : null;
 		String rSub = showText && showCps ? context.metrics().rightCps() + " CPS" : null;
-		drawKey(graphics, client, leftX, rowY, halfWidth, mouseHeight, showText ? "LMB" : "", lSub, false, McCompat.optionsKeyDown(options, "keyAttack"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
-		drawKey(graphics, client, leftX + halfWidth + gap, rowY, halfWidth, mouseHeight, showText ? "RMB" : "", rSub, false, McCompat.optionsKeyDown(options, "keyUse"), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, leftX, rowY, halfWidth, mouseHeight, showText ? "LMB" : "", lSub, false, keyDown(options.keyAttack), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+		drawKey(graphics, client, leftX + halfWidth + gap, rowY, halfWidth, mouseHeight, showText ? "RMB" : "", rSub, false, keyDown(options.keyUse), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);
+	}
+
+	private static boolean keyDown(net.minecraft.client.KeyMapping mapping) {
+		return mapping != null && mapping.isDown();
 	}
 
 	private static void drawKey(
-		GuiGraphics graphics,
+		GuiGraphicsExtractor graphics,
 		Minecraft client,
 		int x,
 		int y,
@@ -195,7 +199,7 @@ public class KeystrokesWidget implements HudWidget {
 			String clipped = client.font.plainSubstrByWidth(safeLabel, Math.max(4, width - 4));
 			int tx = x + (width - client.font.width(clipped)) / 2;
 			int ty = y + (height - client.font.lineHeight) / 2;
-			graphics.drawString(client.font, clipped, tx, ty, text, false);
+			graphics.text(client.font, clipped, tx, ty, text, false);
 			return;
 		}
 
@@ -207,12 +211,12 @@ public class KeystrokesWidget implements HudWidget {
 		int bottomTextWidth = Math.round(client.font.width(bottom) * subScale);
 		int bottomX = x + (width - bottomTextWidth) / 2;
 		int bottomY = y + height - Math.round(client.font.lineHeight * subScale) - 4;
-		graphics.drawString(client.font, top, topX, topY, text, false);
+		graphics.text(client.font, top, topX, topY, text, false);
 		var pose = graphics.pose();
 		PoseCompat.push(pose);
 		PoseCompat.translate(pose, bottomX, bottomY);
 		PoseCompat.scale(pose, subScale, subScale);
-		graphics.drawString(client.font, bottom, 0, 0, text, false);
+		graphics.text(client.font, bottom, 0, 0, text, false);
 		PoseCompat.pop(pose);
 	}
 

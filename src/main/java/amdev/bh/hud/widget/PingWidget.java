@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -37,7 +37,7 @@ public class PingWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		int ping = resolvePing(client);
 		String text = widgetConfig.showText() ? ("Ping " + ping + "ms") : (ping + "ms");
 		int baseColor = widgetConfig.textColor;
@@ -52,7 +52,7 @@ public class PingWidget implements HudWidget {
 		}
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, baseColor, 211);
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(text)) / 2);
-		graphics.drawString(client.font, text, drawX, y + 3, color, false);
+		graphics.text(client.font, text, drawX, y + 3, color, false);
 	}
 
 	private static int resolvePing(Minecraft client) {

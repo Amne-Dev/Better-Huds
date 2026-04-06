@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -45,13 +45,13 @@ public class MiniInventoryWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean showHotbar = widgetConfig.toggle("mini_show_hotbar", true);
 		boolean showTitle = widgetConfig.showText();
 		int drawY = y;
 		if (showTitle) {
 			int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 863);
-			graphics.drawString(client.font, Component.translatable("widget.better-huds.mini_inventory_title"), x + 1, y, color, false);
+			graphics.text(client.font, Component.translatable("widget.better-huds.mini_inventory_title"), x + 1, y, color, false);
 			drawY += 10;
 		}
 
@@ -76,8 +76,8 @@ public class MiniInventoryWidget implements HudWidget {
 				if (stack.isEmpty()) {
 					continue;
 				}
-				graphics.renderItem(stack, slotX + 1, slotY + 1);
-				graphics.renderItemDecorations(client.font, stack, slotX + 1, slotY + 1);
+				graphics.item(stack, slotX + 1, slotY + 1);
+				graphics.itemDecorations(client.font, stack, slotX + 1, slotY + 1);
 			}
 		}
 	}
@@ -89,7 +89,7 @@ public class MiniInventoryWidget implements HudWidget {
 		return 9 + (row * 9) + col;
 	}
 
-	private static void drawSlotFrame(GuiGraphics graphics, int x, int y, boolean selected) {
+	private static void drawSlotFrame(GuiGraphicsExtractor graphics, int x, int y, boolean selected) {
 		int border = selected ? 0xFF80D8FF : 0x66464646;
 		graphics.fill(x, y, x + 18, y + 18, 0x66121212);
 		graphics.fill(x, y, x + 18, y + 1, border);

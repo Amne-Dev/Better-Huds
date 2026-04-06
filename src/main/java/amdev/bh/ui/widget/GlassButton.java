@@ -1,7 +1,7 @@
 package amdev.bh.ui.widget;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
@@ -24,7 +24,7 @@ public class GlassButton extends AbstractWidget {
 	}
 
 	@Override
-	protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		int x = getX();
 		int y = getY();
 		int w = getWidth();
@@ -46,7 +46,7 @@ public class GlassButton extends AbstractWidget {
 		String label = client.font.plainSubstrByWidth(getMessage().getString(), Math.max(4, w - 8));
 		int tx = x + (w - client.font.width(label)) / 2;
 		int ty = y + (h - client.font.lineHeight) / 2;
-		graphics.drawString(client.font, label, tx, ty, textColor, false);
+		graphics.text(client.font, label, tx, ty, textColor, false);
 	}
 
 	@Override

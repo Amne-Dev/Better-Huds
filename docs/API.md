@@ -13,7 +13,7 @@ The public extension surface is:
 ## Version Target
 
 - Runtime dependency range in this repository: Minecraft `>=1.21` (`fabric.mod.json`)
-- Build profiles maintained in this repository: `1.21` through `1.21.11` (`scripts/build-profiles.json`)
+- Build profiles maintained in this repository: `1.21` through `1.21.11`, plus `26.1` (`scripts/build-profiles.json`)
 - API is intentionally small and stable, but this is still a mod API, so verify behavior when updating Better Huds versions.
 
 ## Integration Flow

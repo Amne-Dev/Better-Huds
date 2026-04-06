@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.lang.reflect.Field;
@@ -73,6 +74,14 @@ public final class McCompat {
 	public static String itemDisplayName(Item item) {
 		if (item == null || item == Items.AIR) {
 			return "air";
+		}
+		try {
+			String hoverName = new ItemStack(item).getHoverName().getString();
+			if (hoverName != null && !hoverName.isBlank()) {
+				return hoverName;
+			}
+		} catch (Exception ignored) {
+			// Fall through to reflective compatibility lookups.
 		}
 		Component fromGetName = invokeComponent(item, "getName");
 		if (fromGetName != null) {

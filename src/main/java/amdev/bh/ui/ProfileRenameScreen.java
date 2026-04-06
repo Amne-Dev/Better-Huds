@@ -3,7 +3,7 @@ package amdev.bh.ui;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -77,17 +77,17 @@ public class ProfileRenameScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
-		graphics.drawString(font, title, panelX + 16, panelY + 16, 0xFFFFFFFF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.settings.profile_name"), panelX + 16, panelY + 38, 0xFFB6E3FF, false);
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		graphics.text(font, title, panelX + 16, panelY + 16, 0xFFFFFFFF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.settings.profile_name"), panelX + 16, panelY + 38, 0xFFB6E3FF, false);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 }
 

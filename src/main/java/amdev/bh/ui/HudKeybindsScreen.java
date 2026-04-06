@@ -2,7 +2,7 @@ package amdev.bh.ui;
 
 import amdev.bh.hud.HudSystem;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -44,28 +44,28 @@ public class HudKeybindsScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
-		graphics.drawString(font, title, panelX + 14, panelY + 14, 0xFFFFFFFF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.settings.keybinds_hint"), panelX + 14, panelY + 30, 0xFFB6E3FF, false);
+		graphics.text(font, title, panelX + 14, panelY + 14, 0xFFFFFFFF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.settings.keybinds_hint"), panelX + 14, panelY + 30, 0xFFB6E3FF, false);
 
 		List<HudSystem.HudKeybind> keybinds = hudSystem.keybinds();
 		int y = panelY + 56;
 		for (HudSystem.HudKeybind keybind : keybinds) {
 			String label = Component.translatable(keybind.nameKey()).getString();
 			String key = keybind.keyMapping() != null ? keybind.keyMapping().getTranslatedKeyMessage().getString() : "?";
-			graphics.drawString(font, label, panelX + 16, y, 0xFFFFFFFF, false);
-			graphics.drawString(font, key, panelX + panelWidth - 120, y, 0xFFDAFFC2, false);
+			graphics.text(font, label, panelX + 16, y, 0xFFFFFFFF, false);
+			graphics.text(font, key, panelX + panelWidth - 120, y, 0xFFDAFFC2, false);
 			y += 20;
 		}
 
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 }
 

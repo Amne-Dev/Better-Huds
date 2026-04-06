@@ -83,25 +83,25 @@ $profilesPath = Join-Path $PSScriptRoot "mc-profiles.json"
 $profiles = Load-Profiles -Path $profilesPath
 
 if (-not [string]::IsNullOrWhiteSpace($minecraftVersion) -or -not [string]::IsNullOrWhiteSpace($fabricApiVersion)) {
-	$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 1.21.11)" -DefaultValue $minecraftVersion
-	$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.141.3+1.21.11)" -DefaultValue $fabricApiVersion
-	$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.4)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($loaderVersion)) { "0.18.4" } else { $loaderVersion })
+	$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 26.1)" -DefaultValue $minecraftVersion
+	$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.144.3+26.1)" -DefaultValue $fabricApiVersion
+	$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.5)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($loaderVersion)) { "0.18.5" } else { $loaderVersion })
 } elseif ($Profile -gt 0 -and $Profile -le $profiles.Count) {
 	$selected = $profiles[$Profile - 1]
-	$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 1.21.11)" -DefaultValue $selected.minecraft_version
-	$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.141.3+1.21.11)" -DefaultValue $selected.fabric_api_version
-	$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.4)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($selected.loader_version)) { "0.18.4" } else { [string]$selected.loader_version })
+	$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 26.1)" -DefaultValue $selected.minecraft_version
+	$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.144.3+26.1)" -DefaultValue $selected.fabric_api_version
+	$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.5)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($selected.loader_version)) { "0.18.5" } else { [string]$selected.loader_version })
 } else {
 	$choice = Select-Profile -Profiles $profiles
 	if ($choice -le $profiles.Count) {
 		$selected = $profiles[$choice - 1]
-		$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 1.21.11)" -DefaultValue $selected.minecraft_version
-		$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.141.3+1.21.11)" -DefaultValue $selected.fabric_api_version
-		$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.4)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($selected.loader_version)) { "0.18.4" } else { [string]$selected.loader_version })
+		$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 26.1)" -DefaultValue $selected.minecraft_version
+		$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.144.3+26.1)" -DefaultValue $selected.fabric_api_version
+		$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.5)" -DefaultValue $(if ([string]::IsNullOrWhiteSpace($selected.loader_version)) { "0.18.5" } else { [string]$selected.loader_version })
 	} else {
-		$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 1.21.11)"
-		$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.141.3+1.21.11)"
-		$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.4)" -DefaultValue "0.18.4"
+		$minecraftVersion = Read-Required -Prompt "Minecraft version (e.g. 26.1)"
+		$fabricApiVersion = Read-Required -Prompt "Fabric API version (e.g. 0.144.3+26.1)"
+		$loaderVersion = Read-Required -Prompt "Fabric loader version (e.g. 0.18.5)" -DefaultValue "0.18.5"
 	}
 }
 

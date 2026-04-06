@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class FpsWidget implements HudWidget {
@@ -36,7 +36,7 @@ public class FpsWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		int fps = Math.max(0, client.getFps());
 		int avgFps = context.metrics().averageFps();
 		int low = context.metrics().onePercentLowFps();
@@ -46,6 +46,6 @@ public class FpsWidget implements HudWidget {
 			: String.format("%d", fps);
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(text)) / 2);
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 101);
-		graphics.drawString(client.font, text, drawX, y + 3, color, false);
+		graphics.text(client.font, text, drawX, y + 3, color, false);
 	}
 }

@@ -5,7 +5,7 @@ import amdev.bh.config.ProfileShareCodec;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -355,24 +355,24 @@ public class HudSettingsScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
 
 		graphics.fill(panelX + sidebarWidth, panelY + 1, panelX + sidebarWidth + 1, panelY + panelHeight - 1, 0x5577AACC);
-		graphics.drawString(font, Component.translatable("screen.better-huds.settings.profiles"), panelX + 12, panelY + 14, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.settings.profiles"), panelX + 12, panelY + 14, 0xFFB6E3FF, false);
 		if (totalPages > 1) {
 			String pageLabel = (page + 1) + "/" + totalPages;
-			graphics.drawString(font, pageLabel, contentX + contentWidth - 102, panelY + 35, 0xFFB6E3FF, false);
+			graphics.text(font, pageLabel, contentX + contentWidth - 102, panelY + 35, 0xFFB6E3FF, false);
 		}
 		int visibleCount = (int) hudSystem.widgets().stream().filter(widget -> !widget.id().equals("held_item") && matchesFilter(widget)).count();
 		int totalCount = (int) hudSystem.widgets().stream().filter(widget -> !widget.id().equals("held_item")).count();
-		graphics.drawString(
+		graphics.text(
 			font,
 			Component.translatable("screen.better-huds.settings.showing", Integer.toString(visibleCount), Integer.toString(totalCount)),
 			contentX + 10,
@@ -383,7 +383,7 @@ public class HudSettingsScreen extends Screen {
 
 		Component hoveredInfoTip = null;
 		if (cards.isEmpty()) {
-			graphics.drawString(
+			graphics.text(
 				font,
 				Component.translatable("screen.better-huds.settings.no_widgets_filter"),
 				contentX + 12,
@@ -401,10 +401,10 @@ public class HudSettingsScreen extends Screen {
 			graphics.fill(card.x(), card.y(), card.x() + 1, card.y() + card.height(), border);
 			graphics.fill(card.x() + card.width() - 1, card.y(), card.x() + card.width(), card.y() + card.height(), border);
 
-			graphics.renderItem(card.icon(), card.x() + 8, card.y() + 8);
+			graphics.item(card.icon(), card.x() + 8, card.y() + 8);
 			String name = font.plainSubstrByWidth(card.widget().displayName().getString(), card.width() - 42);
-			graphics.drawString(font, name, card.x() + 30, card.y() + 10, 0xFFFFFFFF, false);
-			graphics.drawString(
+			graphics.text(font, name, card.x() + 30, card.y() + 10, 0xFFFFFFFF, false);
+			graphics.text(
 				font,
 				Component.translatable("screen.better-huds.settings.widget_state", enabled ? "ON" : "OFF"),
 				card.x() + 30,
@@ -424,7 +424,7 @@ public class HudSettingsScreen extends Screen {
 				graphics.fill(infoX, infoY + 9, infoX + 10, infoY + 10, infoBorder);
 				graphics.fill(infoX, infoY, infoX + 1, infoY + 10, infoBorder);
 				graphics.fill(infoX + 9, infoY, infoX + 10, infoY + 10, infoBorder);
-				graphics.drawString(font, "i", infoX + 3, infoY + 1, 0xFFFFFFFF, false);
+				graphics.text(font, "i", infoX + 3, infoY + 1, 0xFFFFFFFF, false);
 				if (infoHovered) {
 					hoveredInfoTip = keybindTip;
 				}
@@ -442,16 +442,16 @@ public class HudSettingsScreen extends Screen {
 			graphics.fill(menuX, menuY + menuHeight - 1, menuX + menuWidth, menuY + menuHeight, 0xFF80D8FF);
 			graphics.fill(menuX, menuY, menuX + 1, menuY + menuHeight, 0xFF80D8FF);
 			graphics.fill(menuX + menuWidth - 1, menuY, menuX + menuWidth, menuY + menuHeight, 0xFF80D8FF);
-			graphics.drawString(font, Component.translatable("screen.better-huds.settings.profile_menu_rename"), menuX + 8, menuY + 5, 0xFFFFFFFF, false);
-			graphics.drawString(font, Component.translatable("screen.better-huds.settings.profile_menu_delete"), menuX + 8, menuY + 23, canDelete ? 0xFFFF8080 : 0xFF777777, false);
-			graphics.drawString(font, Component.translatable("screen.better-huds.settings.profile_menu_export"), menuX + 8, menuY + 41, 0xFFB6E3FF, false);
+			graphics.text(font, Component.translatable("screen.better-huds.settings.profile_menu_rename"), menuX + 8, menuY + 5, 0xFFFFFFFF, false);
+			graphics.text(font, Component.translatable("screen.better-huds.settings.profile_menu_delete"), menuX + 8, menuY + 23, canDelete ? 0xFFFF8080 : 0xFF777777, false);
+			graphics.text(font, Component.translatable("screen.better-huds.settings.profile_menu_export"), menuX + 8, menuY + 41, 0xFFB6E3FF, false);
 		}
 
 		if (System.currentTimeMillis() < noticeUntilMs) {
-			graphics.drawString(font, noticeMessage, contentX + 10, panelY + panelHeight - 14, noticeColor, false);
+			graphics.text(font, noticeMessage, contentX + 10, panelY + panelHeight - 14, noticeColor, false);
 		}
 
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 		renderDropdown(graphics, sortDropdownButton, sortDropdownOpen, WidgetSort.values(), this::sortLabel, widgetSort.ordinal(), mouseX, mouseY);
 		renderDropdown(graphics, filterDropdownButton, filterDropdownOpen, WidgetFilter.values(), this::filterLabel, widgetFilter.ordinal(), mouseX, mouseY);
 		if (hoveredInfoTip != null) {
@@ -540,7 +540,7 @@ public class HudSettingsScreen extends Screen {
 	}
 
 	private <T> void renderDropdown(
-		GuiGraphics graphics,
+		GuiGraphicsExtractor graphics,
 		GlassButton anchor,
 		boolean open,
 		T[] options,
@@ -571,7 +571,7 @@ public class HudSettingsScreen extends Screen {
 				int fill = i == selectedIndex ? 0x553A5F77 : 0x44304960;
 				graphics.fill(x + 1, rowY + 1, x + w - 1, rowY + itemHeight - 1, fill);
 			}
-			graphics.drawString(font, labelProvider.apply(options[i]), x + 6, rowY + 5, i == selectedIndex ? 0xFFDAFFC2 : 0xFFFFFFFF, false);
+			graphics.text(font, labelProvider.apply(options[i]), x + 6, rowY + 5, i == selectedIndex ? 0xFFDAFFC2 : 0xFFFFFFFF, false);
 		}
 	}
 
@@ -609,7 +609,7 @@ public class HudSettingsScreen extends Screen {
 		return Math.max(min, Math.min(max, value));
 	}
 
-	private void drawSimpleTooltip(GuiGraphics graphics, Component text, int mouseX, int mouseY) {
+	private void drawSimpleTooltip(GuiGraphicsExtractor graphics, Component text, int mouseX, int mouseY) {
 		String line = text.getString();
 		int pad = 4;
 		int tx = mouseX + 10;
@@ -627,7 +627,7 @@ public class HudSettingsScreen extends Screen {
 		graphics.fill(tx, ty + th - 1, tx + tw, ty + th, 0xFF80D8FF);
 		graphics.fill(tx, ty, tx + 1, ty + th, 0xFF80D8FF);
 		graphics.fill(tx + tw - 1, ty, tx + tw, ty + th, 0xFF80D8FF);
-		graphics.drawString(font, line, tx + pad, ty + pad, 0xFFFFFFFF, false);
+		graphics.text(font, line, tx + pad, ty + pad, 0xFFFFFFFF, false);
 	}
 
 	private record Card(HudWidget widget, ItemStack icon, int x, int y, int width, int height) {

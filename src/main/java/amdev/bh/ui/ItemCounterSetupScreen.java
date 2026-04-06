@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.util.McCompat;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -211,26 +211,26 @@ public class ItemCounterSetupScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
-		graphics.drawString(font, title, panelX + 16, panelY + 15, 0xFFFFFFFF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_hint"), panelX + 16, panelY + 31, 0xFFB6E3FF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_search"), panelX + 20, panelY + 88, 0xFFECECEC, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_amount"), panelX + 280, panelY + 88, 0xFFECECEC, false);
+		graphics.text(font, title, panelX + 16, panelY + 15, 0xFFFFFFFF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.item_counter_hint"), panelX + 16, panelY + 31, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.item_counter_search"), panelX + 20, panelY + 88, 0xFFECECEC, false);
+		graphics.text(font, Component.translatable("screen.better-huds.item_counter_amount"), panelX + 280, panelY + 88, 0xFFECECEC, false);
 
 		Item item = resolveSelectedItem();
-		graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_selected"), panelX + 20, panelY + 66, 0xFFECECEC, false);
+		graphics.text(font, Component.translatable("screen.better-huds.item_counter_selected"), panelX + 20, panelY + 66, 0xFFECECEC, false);
 		if (item != Items.AIR) {
-			graphics.renderItem(new ItemStack(item), panelX + 152, panelY + 60);
-			graphics.drawString(font, font.plainSubstrByWidth(McCompat.itemDisplayName(item), 240), panelX + 176, panelY + 64, 0xFFFFFFFF, false);
+			graphics.item(new ItemStack(item), panelX + 152, panelY + 60);
+			graphics.text(font, font.plainSubstrByWidth(McCompat.itemDisplayName(item), 240), panelX + 176, panelY + 64, 0xFFFFFFFF, false);
 		} else {
-			graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_none"), panelX + 152, panelY + 64, 0xFFAAAAAA, false);
+			graphics.text(font, Component.translatable("screen.better-huds.item_counter_none"), panelX + 152, panelY + 64, 0xFFAAAAAA, false);
 		}
 
 		int listX = panelX + 20;
@@ -238,18 +238,18 @@ public class ItemCounterSetupScreen extends Screen {
 		int listW = panelWidth - 40;
 		int rowHeight = 16;
 		if (!suggestions.isEmpty()) {
-			graphics.drawString(font, Component.translatable("screen.better-huds.item_counter_suggestions"), listX, listY - 12, 0xFFB6E3FF, false);
+			graphics.text(font, Component.translatable("screen.better-huds.item_counter_suggestions"), listX, listY - 12, 0xFFB6E3FF, false);
 		}
 		for (int i = 0; i < suggestions.size(); i++) {
 			ItemSuggestion suggestion = suggestions.get(i);
 			int rowY = listY + i * rowHeight;
 			boolean hovered = mouseX >= listX && mouseX < listX + listW && mouseY >= rowY && mouseY < rowY + rowHeight;
 			graphics.fill(listX, rowY, listX + listW, rowY + rowHeight, hovered ? 0x66304555 : 0x33222222);
-			graphics.drawString(font, font.plainSubstrByWidth(suggestion.itemId(), 185), listX + 4, rowY + 4, 0xFFFFFFFF, false);
-			graphics.drawString(font, font.plainSubstrByWidth(suggestion.displayName(), 145), listX + 210, rowY + 4, 0xFFB6E3FF, false);
+			graphics.text(font, font.plainSubstrByWidth(suggestion.itemId(), 185), listX + 4, rowY + 4, 0xFFFFFFFF, false);
+			graphics.text(font, font.plainSubstrByWidth(suggestion.displayName(), 145), listX + 210, rowY + 4, 0xFFB6E3FF, false);
 		}
 
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 
 	private record ItemSuggestion(String itemId, String displayName) {

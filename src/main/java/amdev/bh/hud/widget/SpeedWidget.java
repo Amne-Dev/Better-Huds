@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class SpeedWidget implements HudWidget {
@@ -36,17 +36,18 @@ public class SpeedWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
-		if (client.player == null) {
-			return;
-		}
-		double speed = client.player.getDeltaMovement().horizontalDistance() * 20.0D;
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean precise = widgetConfig.toggle("speed_precise", false);
 		String format = precise ? "%.3f" : "%.2f";
-		String value = String.format(format, speed);
+		if (client.player == null && !context.editorMode()) {
+			return;
+		}
+		String value = client.player == null
+			? (precise ? "5.432" : "5.43")
+			: String.format(format, client.player.getDeltaMovement().horizontalDistance() * 20.0D);
 		String text = widgetConfig.showText() ? ("Speed " + value + " b/s") : value;
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(text)) / 2);
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 173);
-		graphics.drawString(client.font, text, drawX, y + 3, color, false);
+		graphics.text(client.font, text, drawX, y + 3, color, false);
 	}
 }

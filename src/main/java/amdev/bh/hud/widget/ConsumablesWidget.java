@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -62,13 +62,13 @@ public class ConsumablesWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		int maxIcons = widgetConfig.toggle("consumables_compact", true) ? 8 : 14;
 		List<Entry> entries = collectEntries(client, widgetConfig, maxIcons);
 		int textColor = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 307);
 		if (entries.isEmpty()) {
 			if (context.editorMode() && widgetConfig.showText()) {
-				graphics.drawString(client.font, Component.translatable("widget.better-huds.consumables_empty"), x, y + 3, textColor, false);
+				graphics.text(client.font, Component.translatable("widget.better-huds.consumables_empty"), x, y + 3, textColor, false);
 			}
 			return;
 		}
@@ -76,11 +76,11 @@ public class ConsumablesWidget implements HudWidget {
 		for (int i = 0; i < entries.size(); i++) {
 			Entry entry = entries.get(i);
 			int iconX = x + (i * 18);
-			graphics.renderItem(new ItemStack(entry.item()), iconX, y);
+			graphics.item(new ItemStack(entry.item()), iconX, y);
 			if (widgetConfig.showText()) {
 				String count = Integer.toString(entry.count());
 				int countX = iconX + (16 - client.font.width(count)) / 2;
-				graphics.drawString(client.font, count, countX, y - 6, textColor, true);
+				graphics.text(client.font, count, countX, y - 6, textColor, true);
 			}
 		}
 	}

@@ -11,7 +11,7 @@ import amdev.bh.ui.widget.GlassSlider;
 import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.util.PoseCompat;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -659,11 +659,11 @@ public class WidgetSettingsScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		applyControlsScroll();
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
@@ -672,8 +672,8 @@ public class WidgetSettingsScreen extends Screen {
 
 		HudWidget widget = hudSystem.widget(widgetId);
 		String widgetName = widget != null ? widget.displayName().getString() : widgetId;
-		graphics.drawString(font, title, panelX + 14, panelY + 14, 0xFFFFFFFF, false);
-		graphics.drawString(font, widgetName, panelX + 160, panelY + 14, 0xFFB6E3FF, false);
+		graphics.text(font, title, panelX + 14, panelY + 14, 0xFFFFFFFF, false);
+		graphics.text(font, widgetName, panelX + 160, panelY + 14, 0xFFB6E3FF, false);
 
 		int appearanceCardHeight = Math.max(72, appearanceSectionEndY - appearanceSectionY + 26);
 		int behaviorCardHeight = Math.max(72, behaviorSectionEndY - behaviorSectionY + 26);
@@ -681,11 +681,11 @@ public class WidgetSettingsScreen extends Screen {
 		drawScrollableSectionCard(graphics, controlsX - 8, behaviorSectionY - 14, controlsWidth + 4, behaviorCardHeight);
 		drawScrollableLeftLabel(graphics, Component.translatable("screen.better-huds.settings.section_appearance"), controlsX, panelY + 48, 0xFFB6E3FF);
 		drawScrollableLeftLabel(graphics, Component.translatable("screen.better-huds.settings.section_behavior"), controlsX, panelY + 196, 0xFFB6E3FF);
-		graphics.drawString(font, Component.translatable("screen.better-huds.settings.section_preview"), previewX, panelY + 48, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.settings.section_preview"), previewX, panelY + 48, 0xFFB6E3FF, false);
 		drawScrollableLeftLabel(graphics, Component.translatable("screen.better-huds.settings.widget_hint"), controlsX, panelY + 30, 0xFFB6E3FF);
 
 		renderWidgetPreview(graphics, widget);
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 		for (ColorChipBinding binding : colorChipBindings) {
 			if (!binding.button().visible) {
 				continue;
@@ -722,7 +722,7 @@ public class WidgetSettingsScreen extends Screen {
 			&& mouseY <= controlsViewportBottom;
 	}
 
-	private void drawScrollableSectionCard(GuiGraphics graphics, int x, int baseY, int width, int height) {
+	private void drawScrollableSectionCard(GuiGraphicsExtractor graphics, int x, int baseY, int width, int height) {
 		int y = baseY - controlsScroll;
 		if (y + height < controlsViewportTop || y > controlsViewportBottom) {
 			return;
@@ -730,15 +730,15 @@ public class WidgetSettingsScreen extends Screen {
 		drawSectionCard(graphics, x, y, width, height);
 	}
 
-	private void drawScrollableLeftLabel(GuiGraphics graphics, Component text, int x, int baseY, int color) {
+	private void drawScrollableLeftLabel(GuiGraphicsExtractor graphics, Component text, int x, int baseY, int color) {
 		int y = baseY - controlsScroll;
 		if (y + font.lineHeight < controlsViewportTop || y > controlsViewportBottom) {
 			return;
 		}
-		graphics.drawString(font, text, x, y, color, false);
+		graphics.text(font, text, x, y, color, false);
 	}
 
-	private void drawControlsScrollBar(GuiGraphics graphics) {
+	private void drawControlsScrollBar(GuiGraphicsExtractor graphics) {
 		if (controlsScrollMax <= 0) {
 			return;
 		}
@@ -757,7 +757,7 @@ public class WidgetSettingsScreen extends Screen {
 		graphics.fill(trackX, thumbY, trackX + trackWidth, thumbY + thumbHeight, 0xCC80D8FF);
 	}
 
-	private void renderWidgetPreview(GuiGraphics graphics, HudWidget widget) {
+	private void renderWidgetPreview(GuiGraphicsExtractor graphics, HudWidget widget) {
 		if (minecraft == null || widget == null) {
 			return;
 		}
@@ -798,7 +798,7 @@ public class WidgetSettingsScreen extends Screen {
 	private record LabelBinding(GlassButton button, Supplier<Component> labelSupplier) {
 	}
 
-	private void drawSimpleTooltip(GuiGraphics graphics, Component text, int mouseX, int mouseY) {
+	private void drawSimpleTooltip(GuiGraphicsExtractor graphics, Component text, int mouseX, int mouseY) {
 		String line = text.getString();
 		int pad = 4;
 		int tx = mouseX + 10;
@@ -816,10 +816,10 @@ public class WidgetSettingsScreen extends Screen {
 		graphics.fill(tx, ty + th - 1, tx + tw, ty + th, 0xFF80D8FF);
 		graphics.fill(tx, ty, tx + 1, ty + th, 0xFF80D8FF);
 		graphics.fill(tx + tw - 1, ty, tx + tw, ty + th, 0xFF80D8FF);
-		graphics.drawString(font, line, tx + pad, ty + pad, 0xFFFFFFFF, false);
+		graphics.text(font, line, tx + pad, ty + pad, 0xFFFFFFFF, false);
 	}
 
-	private void drawColorChip(GuiGraphics graphics, GlassButton button, int color) {
+	private void drawColorChip(GuiGraphicsExtractor graphics, GlassButton button, int color) {
 		int chipSize = Math.min(12, button.getHeight() - 6);
 		int x = button.getX() + button.getWidth() - chipSize - 4;
 		int y = button.getY() + (button.getHeight() - chipSize) / 2;
@@ -827,7 +827,7 @@ public class WidgetSettingsScreen extends Screen {
 		graphics.fill(x, y, x + chipSize, y + chipSize, color);
 	}
 
-	private void drawSectionCard(GuiGraphics graphics, int x, int y, int w, int h) {
+	private void drawSectionCard(GuiGraphicsExtractor graphics, int x, int y, int w, int h) {
 		graphics.fill(x, y, x + w, y + h, 0x3318232E);
 		graphics.fill(x, y, x + w, y + 1, 0x5577AACC);
 		graphics.fill(x, y + h - 1, x + w, y + h, 0x5577AACC);

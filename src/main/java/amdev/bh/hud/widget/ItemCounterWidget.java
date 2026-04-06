@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -45,7 +45,7 @@ public class ItemCounterWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		Player player = client.player;
 		if (player == null) {
 			return;
@@ -61,7 +61,7 @@ public class ItemCounterWidget implements HudWidget {
 			if (context.editorMode() && widgetConfig.showText()) {
 				String unset = Component.translatable("widget.better-huds.item_counter_unset").getString();
 				int unsetX = alignRight ? x + Math.max(0, widgetWidth - client.font.width(unset)) : x;
-				graphics.drawString(client.font, unset, unsetX, y + 3, textColor, false);
+				graphics.text(client.font, unset, unsetX, y + 3, textColor, false);
 			}
 			return;
 		}
@@ -73,21 +73,21 @@ public class ItemCounterWidget implements HudWidget {
 		int textRight = alignRight ? iconX - 4 : x + widgetWidth;
 		int textMaxWidth = Math.max(10, textRight - textLeft);
 
-		graphics.renderItem(new ItemStack(tracked), iconX, y);
+		graphics.item(new ItemStack(tracked), iconX, y);
 		if (widgetConfig.showText()) {
 			String itemName = client.font.plainSubstrByWidth(McCompat.itemDisplayName(tracked), textMaxWidth);
 			String ratio = have + "/" + target;
 			if (alignRight) {
-				graphics.drawString(client.font, itemName, textRight - client.font.width(itemName), y + 1, textColor, false);
-				graphics.drawString(client.font, ratio, textRight - client.font.width(ratio), y + 13, WidgetRenderUtil.durabilityColor(progress), false);
+				graphics.text(client.font, itemName, textRight - client.font.width(itemName), y + 1, textColor, false);
+				graphics.text(client.font, ratio, textRight - client.font.width(ratio), y + 13, WidgetRenderUtil.durabilityColor(progress), false);
 			} else {
-				graphics.drawString(client.font, itemName, textLeft, y + 1, textColor, false);
-				graphics.drawString(client.font, ratio, textLeft, y + 13, WidgetRenderUtil.durabilityColor(progress), false);
+				graphics.text(client.font, itemName, textLeft, y + 1, textColor, false);
+				graphics.text(client.font, ratio, textLeft, y + 13, WidgetRenderUtil.durabilityColor(progress), false);
 			}
 		} else {
 			String ratio = have + "/" + target;
 			int ratioX = alignRight ? textRight - client.font.width(ratio) : textLeft;
-			graphics.drawString(client.font, ratio, ratioX, y + 6, textColor, false);
+			graphics.text(client.font, ratio, ratioX, y + 6, textColor, false);
 		}
 
 		if (widgetConfig.toggle("counter_show_bar", true)) {

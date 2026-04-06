@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class CrosshairWidget implements HudWidget {
@@ -31,25 +31,36 @@ public class CrosshairWidget implements HudWidget {
 
 	@Override
 	public int getWidth(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
-		int size = size(widgetConfig);
+		int size = size(widgetConfig, widgetConfig.toggle("crosshair_invert", false));
 		return Math.max(8, size);
 	}
 
 	@Override
 	public int getHeight(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
-		int size = size(widgetConfig);
+		int size = size(widgetConfig, widgetConfig.toggle("crosshair_invert", false));
 		return Math.max(8, size);
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public float centerReferenceX(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
+		return visualCenter(widgetConfig);
+	}
+
+	@Override
+	public float centerReferenceY(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
+		return visualCenter(widgetConfig);
+	}
+
+	@Override
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean invert = widgetConfig.toggle("crosshair_invert", false);
 		if (invert) {
 			McCompat.enableInvertBlend();
 		}
 		try {
+			int outlinePad = outlinePad(widgetConfig, invert);
 			if (CrosshairPatternUtil.useDrawnPattern(widgetConfig)) {
-				renderDrawnPattern(graphics, widgetConfig, x, y, invert);
+				renderDrawnPattern(graphics, widgetConfig, x + outlinePad, y + outlinePad, invert);
 				return;
 			}
 
@@ -61,8 +72,8 @@ public class CrosshairWidget implements HudWidget {
 			int baseText = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 647);
 			int color = invert ? 0xFFFFFFFF : baseText;
 			int outlineColor = widgetConfig.backgroundColor == 0 ? 0xB0000000 : widgetConfig.backgroundColor;
-			int centerX = x + length + gap;
-			int centerY = y + length + gap;
+			int centerX = x + outlinePad + length + gap;
+			int centerY = y + outlinePad + length + gap;
 
 			// Left arm
 			drawRect(graphics, centerX - gap - length, centerY, centerX - gap, centerY + thickness, color, outline, outlineColor);
@@ -83,17 +94,18 @@ public class CrosshairWidget implements HudWidget {
 		}
 	}
 
-	private static int size(BetterHudsConfig.WidgetConfig widgetConfig) {
+	private static int size(BetterHudsConfig.WidgetConfig widgetConfig, boolean invert) {
+		int pad = outlinePad(widgetConfig, invert) * 2;
 		if (CrosshairPatternUtil.useDrawnPattern(widgetConfig)) {
-			return CrosshairPatternUtil.gridSize(widgetConfig) * CrosshairPatternUtil.pixelSize(widgetConfig);
+			return (CrosshairPatternUtil.gridSize(widgetConfig) * CrosshairPatternUtil.pixelSize(widgetConfig)) + pad;
 		}
 		int thickness = clamp(widgetConfig.intValue("crosshair_thickness", 2), 1, 8);
 		int gap = clamp(widgetConfig.intValue("crosshair_gap", 3), 0, 24);
 		int length = clamp(widgetConfig.intValue("crosshair_length", 6), 1, 40);
-		return (length + gap) * 2 + thickness;
+		return ((length + gap) * 2 + thickness) + pad;
 	}
 
-	private static void renderDrawnPattern(GuiGraphics graphics, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y, boolean invert) {
+	private static void renderDrawnPattern(GuiGraphicsExtractor graphics, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y, boolean invert) {
 		int grid = CrosshairPatternUtil.gridSize(widgetConfig);
 		int pixelSize = CrosshairPatternUtil.pixelSize(widgetConfig);
 		boolean outline = !invert && widgetConfig.toggle("crosshair_outline", true);
@@ -127,11 +139,20 @@ public class CrosshairWidget implements HudWidget {
 		}
 	}
 
-	private static void drawRect(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color, boolean outline, int outlineColor) {
+	private static void drawRect(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int color, boolean outline, int outlineColor) {
 		if (outline) {
 			graphics.fill(x1 - 1, y1 - 1, x2 + 1, y2 + 1, outlineColor);
 		}
 		graphics.fill(x1, y1, x2, y2, color);
+	}
+
+	private static int outlinePad(BetterHudsConfig.WidgetConfig widgetConfig, boolean invert) {
+		return !invert && widgetConfig.toggle("crosshair_outline", true) ? 1 : 0;
+	}
+
+	private static float visualCenter(BetterHudsConfig.WidgetConfig widgetConfig) {
+		int size = size(widgetConfig, widgetConfig.toggle("crosshair_invert", false));
+		return size / 2.0F;
 	}
 
 	private static int clamp(int value, int min, int max) {

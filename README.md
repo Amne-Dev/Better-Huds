@@ -12,7 +12,7 @@ Better Huds is a modular Fabric HUD mod for Minecraft `1.21.x` with draggable wi
 ## Supported Versions
 
 - Runtime dependency range in `fabric.mod.json`: Minecraft `>=1.21`
-- Build profiles included in this repo: `1.21` through `1.21.11`
+- Build profiles included in this repo: `1.21` through `1.21.11`, plus `26.1`
 
 ## Quick API Start
 
@@ -100,11 +100,11 @@ Default task is `runClient`. You can pass a different task:
 - `.\scripts\run-version.ps1 -Task runServer`
 
 Profiles are stored in `scripts/mc-profiles.json`. Add more entries there to get them in the selection menu.
-Current presets include `1.21.9`, `1.21.10`, `1.21.11`, and a `1.21.x` custom profile.
+Current presets include `1.21.9`, `1.21.10`, `1.21.11`, `26.1`, and a custom profile.
 
 Build one version directly with Gradle:
 
-- `.\gradlew.bat -Pminecraft_version=1.21.11 -Pfabric_api_version=0.141.3+1.21.11 -Ploader_version=0.18.4 build`
+- `.\gradlew.bat -Pminecraft_version=26.1 -Pfabric_api_version=0.144.3+26.1 -Ploader_version=0.18.5 build`
 
 ## Build All Versions Script
 
@@ -125,12 +125,12 @@ By default, the script builds **every profile entry** (every configured Minecraf
 
 Useful flags:
 
-- `-Task remapJar`
+- `-Task jar`
 - `-BuildByCompatGroup` (collapse to one build per `compat_group`, using the oldest version in each group)
 - `-StopOnError`
 - `-DryRun`
 - `-OutputRoot build/multi-version`
-- `-OnlyMinecraftVersion 1.21.11`
+- `-OnlyMinecraftVersion 26.1`
 - `-ProfilesPath .\scripts\build-profiles.json`
 
 Artifacts are exported to `build/multi-version/<minecraft-version>/` by default.

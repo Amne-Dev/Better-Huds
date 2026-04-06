@@ -27,13 +27,15 @@ import amdev.bh.ui.HudEditorScreen;
 import amdev.bh.ui.ItemCounterSetupScreen;
 import amdev.bh.util.McCompat;
 import amdev.bh.util.PoseCompat;
-import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,7 +66,17 @@ public class HudSystem {
 		registerKeybinds();
 
 		ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
-		HudRenderCallback.EVENT.register((context, tickCounter) -> renderHud(context));
+		registerHudElements();
+	}
+
+	private void registerHudElements() {
+		Identifier hudElementId = Identifier.fromNamespaceAndPath(BetterHuds.MOD_ID, "hud");
+		HudElementRegistry.addLast(hudElementId, (graphics, tickCounter) -> renderHud(graphics));
+		HudElementRegistry.replaceElement(VanillaHudElements.CROSSHAIR, vanillaElement -> (graphics, tickCounter) -> {
+			if (!shouldReplaceVanillaCrosshair(Minecraft.getInstance())) {
+				vanillaElement.extractRenderState(graphics, tickCounter);
+			}
+		});
 	}
 
 	private void registerWidgets() {
@@ -144,7 +156,7 @@ public class HudSystem {
 		}
 	}
 
-	public void renderHud(GuiGraphics graphics) {
+	public void renderHud(GuiGraphicsExtractor graphics) {
 		Minecraft client = Minecraft.getInstance();
 		if (client.player == null) {
 			return;
@@ -168,7 +180,7 @@ public class HudSystem {
 		}
 	}
 
-	public void renderForEditor(GuiGraphics graphics) {
+	public void renderForEditor(GuiGraphicsExtractor graphics) {
 		Minecraft client = Minecraft.getInstance();
 		WidgetRenderUtil.setChromaSpeed(config().chromaSpeed);
 		HudRenderContext context = new HudRenderContext(config(), metrics, itemHistory, true, true);
@@ -177,7 +189,7 @@ public class HudSystem {
 		}
 	}
 
-	private void renderResolvedWidget(GuiGraphics graphics, Minecraft client, HudRenderContext context, ResolvedWidget resolved, int forcedBackground) {
+	private void renderResolvedWidget(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, ResolvedWidget resolved, int forcedBackground) {
 		if (!resolved.widgetConfig().enabled) {
 			return;
 		}
@@ -228,7 +240,7 @@ public class HudSystem {
 
 			int width = Math.max(8, widget.getWidth(client, config, widgetConfig));
 			int height = Math.max(8, widget.getHeight(client, config, widgetConfig));
-			resolvedWidgets.add(HudLayout.resolve(widget, config, widgetConfig, screenWidth, screenHeight, width, height));
+			resolvedWidgets.add(HudLayout.resolve(client, widget, config, widgetConfig, screenWidth, screenHeight, width, height));
 		}
 
 		return resolvedWidgets;

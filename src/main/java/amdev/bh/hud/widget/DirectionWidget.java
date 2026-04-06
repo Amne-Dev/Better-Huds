@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class DirectionWidget implements HudWidget {
@@ -29,11 +29,11 @@ public class DirectionWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
-		if (client.player == null) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+		if (client.player == null && !context.editorMode()) {
 			return;
 		}
-		float yaw = normalizeYaw(client.player.getYRot());
+		float yaw = normalizeYaw(client.player == null ? 180.0F : client.player.getYRot());
 		int width = getWidth(client) - 2;
 		int centerX = x + width / 2;
 		int lineY = y + 14;
@@ -50,7 +50,7 @@ public class DirectionWidget implements HudWidget {
 		if (widgetConfig.showText() && showLabels) {
 			String text = Component.translatable("widget.better-huds.direction_compass").getString();
 			int drawX = x + Math.max(0, (getWidth(client) - client.font.width(text)) / 2);
-			graphics.drawString(client.font, text, drawX, y + 2, baseColor, false);
+			graphics.text(client.font, text, drawX, y + 2, baseColor, false);
 		}
 	}
 
@@ -62,7 +62,7 @@ public class DirectionWidget implements HudWidget {
 		return normalized;
 	}
 
-	private static void drawMarker(GuiGraphics graphics, Minecraft client, int centerX, int baseY, float yaw, float markerYaw, String label, int mainColor, int secondaryColor) {
+	private static void drawMarker(GuiGraphicsExtractor graphics, Minecraft client, int centerX, int baseY, float yaw, float markerYaw, String label, int mainColor, int secondaryColor) {
 		float diff = wrapDegrees(markerYaw - yaw);
 		float pixelsPerDegree = 1.0F;
 		int markerX = centerX + Math.round(diff * pixelsPerDegree);
@@ -70,7 +70,7 @@ public class DirectionWidget implements HudWidget {
 			return;
 		}
 		graphics.fill(markerX, baseY + 12, markerX + 1, baseY + 18, secondaryColor);
-		graphics.drawString(client.font, label, markerX - 2, baseY + 4, mainColor, false);
+		graphics.text(client.font, label, markerX - 2, baseY + 4, mainColor, false);
 	}
 
 	private static float wrapDegrees(float value) {

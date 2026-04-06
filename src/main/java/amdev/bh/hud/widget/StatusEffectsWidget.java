@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
@@ -72,13 +72,13 @@ public class StatusEffectsWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		Player player = client.player;
-		if (player == null) {
+		if (player == null && !context.editorMode()) {
 			return;
 		}
 
-		List<MobEffectInstance> effects = new ArrayList<>(player.getActiveEffects());
+		List<MobEffectInstance> effects = player == null ? new ArrayList<>() : new ArrayList<>(player.getActiveEffects());
 		effects.sort(Comparator.comparingInt(MobEffectInstance::getDuration).reversed());
 		boolean showText = widgetConfig.showText();
 		boolean showIcons = widgetConfig.toggle("effects_icons", true);
@@ -93,7 +93,7 @@ public class StatusEffectsWidget implements HudWidget {
 			if (context.editorMode() && showText) {
 				String empty = Component.translatable("widget.better-huds.no_effects").getString();
 				int emptyX = alignRight ? x + Math.max(0, widgetWidth - client.font.width(empty)) : x;
-				graphics.drawString(client.font, empty, emptyX, y + 4, 0xFFAAAAAA, false);
+				graphics.text(client.font, empty, emptyX, y + 4, 0xFFAAAAAA, false);
 			}
 			return;
 		}
@@ -138,7 +138,7 @@ public class StatusEffectsWidget implements HudWidget {
 			} else {
 				textX = x + (showIcons ? 20 : 0);
 			}
-			graphics.drawString(client.font, clipped, textX, lineY + (showIcons ? 4 : 0), color, false);
+			graphics.text(client.font, clipped, textX, lineY + (showIcons ? 4 : 0), color, false);
 			drawn++;
 		}
 
@@ -151,17 +151,17 @@ public class StatusEffectsWidget implements HudWidget {
 			} else {
 				textX = x + (showIcons ? 20 : 0);
 			}
-			graphics.drawString(client.font, text, textX, y + (maxLines * rowHeight), 0xFFAAAAAA, false);
+			graphics.text(client.font, text, textX, y + (maxLines * rowHeight), 0xFFAAAAAA, false);
 		}
 	}
 
-	private static void drawEffectIcon(GuiGraphics graphics, Minecraft client, MobEffectInstance effect, int x, int y) {
+	private static void drawEffectIcon(GuiGraphicsExtractor graphics, Minecraft client, MobEffectInstance effect, int x, int y) {
 		int color = 0xFF000000 | effect.getEffect().value().getColor();
 		graphics.fill(x, y, x + 16, y + 16, 0xAA000000);
 		graphics.fill(x + 1, y + 1, x + 15, y + 15, color);
 		String label = effect.getEffect().value().getDisplayName().getString();
 		String shortLabel = label.isBlank() ? "?" : label.substring(0, 1).toUpperCase();
 		int textX = x + (16 - client.font.width(shortLabel)) / 2;
-		graphics.drawString(client.font, shortLabel, textX, y + 4, 0xFFFFFFFF, false);
+		graphics.text(client.font, shortLabel, textX, y + 4, 0xFFFFFFFF, false);
 	}
 }

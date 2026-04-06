@@ -3,7 +3,7 @@ package amdev.bh.ui;
 import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.util.McCompat;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -235,15 +235,15 @@ public class ColorPickerScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + panelHeight, 0xCC111111);
 		graphics.fill(panelX, panelY, panelX + panelWidth, panelY + 1, 0xFF80D8FF);
-		graphics.drawString(font, title, panelX + 14, panelY + 16, 0xFFFFFFFF, false);
+		graphics.text(font, title, panelX + 14, panelY + 16, 0xFFFFFFFF, false);
 
 		renderHueRing(graphics);
 		renderSvSquare(graphics);
@@ -255,16 +255,16 @@ public class ColorPickerScreen extends Screen {
 		graphics.fill(panelX + 180, panelY + 206, panelX + 254, panelY + 224, currentColor);
 		renderCheckerboard(graphics, panelX + 258, panelY + 206, panelX + 334, panelY + 224, 4);
 		graphics.fill(panelX + 258, panelY + 206, panelX + 334, panelY + 224, 0xFF000000 | (currentColor & 0x00FFFFFF));
-		graphics.drawString(font, Component.translatable("screen.better-huds.color_picker.preview"), panelX + 180, panelY + 192, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.color_picker.preview"), panelX + 180, panelY + 192, 0xFFB6E3FF, false);
 
-		graphics.drawString(font, Component.translatable("screen.better-huds.color_picker.opacity", Math.round((alpha / 255.0F) * 100.0F)), panelX + 180, panelY + 216, 0xFFB6E3FF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.color_picker.hex"), panelX + 180, panelY + 242, 0xFFB6E3FF, false);
-		graphics.drawString(font, Component.translatable("screen.better-huds.color_picker.hint"), panelX + 14, panelY + 304, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.color_picker.opacity", Math.round((alpha / 255.0F) * 100.0F)), panelX + 180, panelY + 216, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.color_picker.hex"), panelX + 180, panelY + 242, 0xFFB6E3FF, false);
+		graphics.text(font, Component.translatable("screen.better-huds.color_picker.hint"), panelX + 14, panelY + 304, 0xFFB6E3FF, false);
 
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 
-	private void renderHueRing(GuiGraphics graphics) {
+	private void renderHueRing(GuiGraphicsExtractor graphics) {
 		int drawStep = currentDrawStep();
 		int outerSq = wheelOuterRadius * wheelOuterRadius;
 		int innerSq = wheelInnerRadius * wheelInnerRadius;
@@ -285,7 +285,7 @@ public class ColorPickerScreen extends Screen {
 		}
 	}
 
-	private void renderSvSquare(GuiGraphics graphics) {
+	private void renderSvSquare(GuiGraphicsExtractor graphics) {
 		int drawStep = currentDrawStep();
 		for (int y = 0; y < squareSize; y += drawStep) {
 			for (int x = 0; x < squareSize; x += drawStep) {
@@ -302,7 +302,7 @@ public class ColorPickerScreen extends Screen {
 		graphics.fill(squareX + squareSize - 1, squareY, squareX + squareSize, squareY + squareSize, 0xFF80D8FF);
 	}
 
-	private void renderMarkers(GuiGraphics graphics) {
+	private void renderMarkers(GuiGraphicsExtractor graphics) {
 		double angle = (hue - 0.5D) * Math.PI * 2.0D;
 		int ringRadius = (wheelInnerRadius + wheelOuterRadius) / 2;
 		int hueX = wheelCenterX + (int) Math.round(Math.cos(angle) * ringRadius);
@@ -318,7 +318,7 @@ public class ColorPickerScreen extends Screen {
 		graphics.fill(svX, svY - 2, svX + 1, svY + 2, 0xFF000000);
 	}
 
-	private void renderAlphaBar(GuiGraphics graphics) {
+	private void renderAlphaBar(GuiGraphicsExtractor graphics) {
 		renderCheckerboard(graphics, alphaBarX, alphaBarY, alphaBarX + alphaBarWidth, alphaBarY + alphaBarHeight, 3);
 		int rgb = WidgetRenderUtil.hsvToRgb(hue, saturation, value) & 0x00FFFFFF;
 		for (int i = 0; i < alphaBarWidth; i++) {
@@ -337,7 +337,7 @@ public class ColorPickerScreen extends Screen {
 		graphics.fill(markerX, alphaBarY - 1, markerX + 1, alphaBarY + alphaBarHeight + 1, 0xFF000000);
 	}
 
-	private void renderCheckerboard(GuiGraphics graphics, int x1, int y1, int x2, int y2, int step) {
+	private void renderCheckerboard(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int step) {
 		int c1 = 0xFF4A4A4A;
 		int c2 = 0xFF2E2E2E;
 		for (int y = y1; y < y2; y += step) {

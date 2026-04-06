@@ -2,7 +2,7 @@ package amdev.bh.hud;
 
 import amdev.bh.config.BetterHudsConfig;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public interface HudWidget {
@@ -34,5 +34,13 @@ public interface HudWidget {
 		return getHeight(client);
 	}
 
-	void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y);
+	default float centerReferenceX(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
+		return getWidth(client, config, widgetConfig) / 2.0F;
+	}
+
+	default float centerReferenceY(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
+		return getHeight(client, config, widgetConfig) / 2.0F;
+	}
+
+	void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y);
 }

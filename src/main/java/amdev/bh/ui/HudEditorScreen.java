@@ -6,7 +6,7 @@ import amdev.bh.hud.HudLayout;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.hud.ResolvedWidget;
 import amdev.bh.ui.widget.GlassButton;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -227,11 +227,11 @@ public class HudEditorScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, int mouseX, int mouseY, float tickDelta) {
+	public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float tickDelta) {
 		if (amdev.bh.util.McCompat.shouldDisableUiBlur()) {
 			graphics.fill(0, 0, width, height, 0x66000000);
 		} else {
-			renderTransparentBackground(graphics);
+			extractTransparentBackground(graphics);
 		}
 		renderGridGuidelines(graphics);
 		hudSystem.renderForEditor(graphics);
@@ -250,7 +250,7 @@ public class HudEditorScreen extends Screen {
 			graphics.fill(x2 - 1, y1, x2, y2, border);
 
 			String name = widget.widget().displayName().getString();
-			graphics.drawString(font, name, x1 + 2, y1 - 10, 0xFFFFFFFF, true);
+			graphics.text(font, name, x1 + 2, y1 - 10, 0xFFFFFFFF, true);
 
 			int[] handle = resizeHandleRect(widget);
 			int handleX = handle[0];
@@ -271,12 +271,12 @@ public class HudEditorScreen extends Screen {
 			int tipY = tipY();
 			int tipHeight = selectedWidgetId != null ? 32 : 20;
 			graphics.fill(tipX, tipY, tipX + tipWidth, tipY + tipHeight, 0x88000000);
-			graphics.drawString(font, Component.translatable("screen.better-huds.editor.hint_compact"), tipX + 8, tipY + 6, 0xFFB6E3FF, false);
+			graphics.text(font, Component.translatable("screen.better-huds.editor.hint_compact"), tipX + 8, tipY + 6, 0xFFB6E3FF, false);
 			if (selectedWidgetId != null) {
-				graphics.drawString(font, Component.translatable("screen.better-huds.editor.nudge_hint_short"), tipX + 8, tipY + 17, 0xFFB6E3FF, false);
+				graphics.text(font, Component.translatable("screen.better-huds.editor.nudge_hint_short"), tipX + 8, tipY + 17, 0xFFB6E3FF, false);
 			}
 		}
-		super.render(graphics, mouseX, mouseY, tickDelta);
+		super.extractRenderState(graphics, mouseX, mouseY, tickDelta);
 	}
 
 	private boolean resizeWidget(MouseButtonEvent event) {
@@ -341,11 +341,13 @@ public class HudEditorScreen extends Screen {
 			if (Math.abs((y + height) - screenH) <= edgeThreshold) {
 				y = screenH - height;
 			}
-			if (Math.abs((x + width / 2) - (screenW / 2)) <= edgeThreshold) {
-				x = (screenW - width) / 2;
+			float referenceX = resolved != null ? resolved.scaledReferenceX() : width / 2.0F;
+			float referenceY = resolved != null ? resolved.scaledReferenceY() : height / 2.0F;
+			if (Math.abs((x + referenceX) - (screenW / 2.0F)) <= edgeThreshold) {
+				x = Math.round((screenW / 2.0F) - referenceX);
 			}
-			if (Math.abs((y + height / 2) - (screenH / 2)) <= edgeThreshold) {
-				y = (screenH - height) / 2;
+			if (Math.abs((y + referenceY) - (screenH / 2.0F)) <= edgeThreshold) {
+				y = Math.round((screenH / 2.0F) - referenceY);
 			}
 		}
 
@@ -354,7 +356,7 @@ public class HudEditorScreen extends Screen {
 		return new int[]{x, y};
 	}
 
-	private void renderGridGuidelines(GuiGraphics graphics) {
+	private void renderGridGuidelines(GuiGraphicsExtractor graphics) {
 		BetterHudsConfig config = hudSystem.config();
 		int step = Math.max(8, config.getGridSizeOrDefault() * 2);
 		for (int x = step; x < width; x += step) {
@@ -370,8 +372,8 @@ public class HudEditorScreen extends Screen {
 		int horizontalColor = 0x4480D8FF;
 		ResolvedWidget selected = selectedWidgetId == null ? null : resolveWidget(selectedWidgetId);
 		if (selected != null) {
-			int selectedCenterX = selected.x() + selected.scaledWidth() / 2;
-			int selectedCenterY = selected.y() + selected.scaledHeight() / 2;
+			float selectedCenterX = selected.screenReferenceX();
+			float selectedCenterY = selected.screenReferenceY();
 			if (Math.abs(selectedCenterX - centerX) <= 8) {
 				verticalColor = 0xCC80D8FF;
 			}
@@ -442,4 +444,3 @@ public class HudEditorScreen extends Screen {
 		return Math.round(value * 100.0F) / 100.0F;
 	}
 }
-

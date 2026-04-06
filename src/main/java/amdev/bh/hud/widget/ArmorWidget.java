@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -78,9 +78,9 @@ public class ArmorWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		Player player = client.player;
-		if (player == null) {
+		if (player == null && !context.editorMode()) {
 			return;
 		}
 
@@ -116,7 +116,7 @@ public class ArmorWidget implements HudWidget {
 		}
 		boolean hasAnyArmor = false;
 		for (int i = 0; i < SLOTS.length; i++) {
-			ItemStack stack = player.getItemBySlot(SLOTS[i]);
+			ItemStack stack = player == null ? ItemStack.EMPTY : player.getItemBySlot(SLOTS[i]);
 			int drawX = vertical ? armorX : armorX + (i * 20);
 			int drawY = vertical ? y + (i * 20) : y;
 
@@ -126,8 +126,8 @@ public class ArmorWidget implements HudWidget {
 			}
 
 			hasAnyArmor = true;
-			graphics.renderItem(stack, drawX, drawY);
-			graphics.renderItemDecorations(client.font, stack, drawX, drawY);
+			graphics.item(stack, drawX, drawY);
+			graphics.itemDecorations(client.font, stack, drawX, drawY);
 
 			if (showText && stack.isDamageableItem()) {
 				int max = Math.max(1, stack.getMaxDamage());
@@ -136,9 +136,9 @@ public class ArmorWidget implements HudWidget {
 				String durabilityText = Math.round(ratio * 100.0F) + "%";
 				int textColor = WidgetRenderUtil.durabilityColor(ratio);
 				if (vertical) {
-					graphics.drawString(client.font, durabilityText, drawX + 20, drawY + 4, textColor, false);
+					graphics.text(client.font, durabilityText, drawX + 20, drawY + 4, textColor, false);
 				} else {
-					graphics.drawString(client.font, durabilityText, drawX - 1, drawY + 20, textColor, false);
+					graphics.text(client.font, durabilityText, drawX - 1, drawY + 20, textColor, false);
 				}
 			}
 		}
@@ -152,11 +152,13 @@ public class ArmorWidget implements HudWidget {
 			} else {
 				textX = x;
 			}
-			graphics.drawString(client.font, empty, textX, y + 5, textColor, false);
+			graphics.text(client.font, empty, textX, y + 5, textColor, false);
 		}
 
-		if (handsInline) {
+		if (handsInline && player != null) {
 			HeldItemWidget.renderHandsAligned(graphics, client, context.config(), widgetConfig, handsX, handsY, handsWidth, alignRight, player);
+		} else if (handsInline && context.editorMode()) {
+			HeldItemWidget.renderPreviewHands(graphics, client, context.config(), widgetConfig, handsX, handsY, handsWidth, alignRight);
 		}
 	}
 }

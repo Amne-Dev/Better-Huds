@@ -5,7 +5,7 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import amdev.bh.util.McCompat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.LightLayer;
@@ -43,29 +43,40 @@ public class BiomeWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
-		if (client.player == null || client.level == null) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+		boolean showLight = widgetConfig.toggle("biome_show_light", true);
+		if ((client.player == null || client.level == null) && !context.editorMode()) {
 			return;
 		}
-		BlockPos pos = client.player.blockPosition();
-		String biomeName = client.level.getBiome(pos)
-			.unwrapKey()
-			.map(key -> prettyName(McCompat.resourceKeyPath(key)))
-			.orElse("Unknown");
-		boolean showLight = widgetConfig.toggle("biome_show_light", true);
+		String biomeName;
+		int blockLight;
+		int skyLight;
+		if (client.player == null || client.level == null) {
+			biomeName = "Cherry Grove";
+			blockLight = 12;
+			skyLight = 15;
+		} else {
+			BlockPos pos = client.player.blockPosition();
+			biomeName = client.level.getBiome(pos)
+				.unwrapKey()
+				.map(key -> prettyName(McCompat.resourceKeyPath(key)))
+				.orElse("Unknown");
+			blockLight = client.level.getBrightness(LightLayer.BLOCK, pos);
+			skyLight = client.level.getBrightness(LightLayer.SKY, pos);
+		}
 		String text;
 		if (widgetConfig.showText()) {
 			text = showLight
-				? String.format("Biome %s  L B%d S%d", biomeName, client.level.getBrightness(LightLayer.BLOCK, pos), client.level.getBrightness(LightLayer.SKY, pos))
+				? String.format("Biome %s  L B%d S%d", biomeName, blockLight, skyLight)
 				: String.format("Biome %s", biomeName);
 		} else {
 			text = showLight
-				? String.format("%s B%d S%d", biomeName, client.level.getBrightness(LightLayer.BLOCK, pos), client.level.getBrightness(LightLayer.SKY, pos))
+				? String.format("%s B%d S%d", biomeName, blockLight, skyLight)
 				: biomeName;
 		}
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 863);
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(text)) / 2);
-		graphics.drawString(client.font, text, drawX, y + 3, color, false);
+		graphics.text(client.font, text, drawX, y + 3, color, false);
 	}
 
 	private static String prettyName(String raw) {

@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -16,7 +16,9 @@ def buildDependencyRange = (findProperty("mc_dependency_range") ?: buildMinecraf
 def buildVersionLabel = sanitizeLabel((findProperty("build_version_label") ?: buildMinecraftVersion).toString())
 def fabricLoaderDependencyRange = (findProperty("fabric_loader_dependency") ?: ">=0.18.0").toString()
 def fabricApiDependencyRange = (findProperty("fabric_api_dependency") ?: "*").toString()
+def javaDependencyRange = (findProperty("java_dependency") ?: (buildMinecraftVersion.startsWith("26.") ? ">=25" : ">=21")).toString()
 def archiveCompatLabel = sanitizeLabel(buildCompatGroup)
+def javaLanguageVersion = JavaVersion.toVersion(buildMinecraftVersion.startsWith("26.") ? 25 : 21)
 
 version = "${project.mod_version}+mc${buildVersionLabel}"
 group = project.maven_group
@@ -81,11 +83,10 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	
 }
 
@@ -97,6 +98,7 @@ processResources {
 	inputs.property "build_profile_name", buildProfileName
 	inputs.property "fabric_loader_dependency", fabricLoaderDependencyRange
 	inputs.property "fabric_api_dependency", fabricApiDependencyRange
+	inputs.property "java_dependency", javaDependencyRange
 
 	filesMatching("fabric.mod.json") {
 		expand(
@@ -106,13 +108,14 @@ processResources {
 			"mc_dependency_range": inputs.properties.mc_dependency_range,
 			"build_profile_name": inputs.properties.build_profile_name,
 			"fabric_loader_dependency": inputs.properties.fabric_loader_dependency,
-			"fabric_api_dependency": inputs.properties.fabric_api_dependency
+			"fabric_api_dependency": inputs.properties.fabric_api_dependency,
+			"java_dependency": inputs.properties.java_dependency
 		)
 	}
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = javaLanguageVersion.majorVersion.toInteger()
 }
 
 tasks.withType(Test).configureEach {
@@ -126,8 +129,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = javaLanguageVersion
+	targetCompatibility = javaLanguageVersion
 }
 
 jar {

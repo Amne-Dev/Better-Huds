@@ -3,7 +3,6 @@
 	"package": "amdev.bh.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"GuiMixin",
 		"OptionsMixin"
 	],
 	"injectors": {

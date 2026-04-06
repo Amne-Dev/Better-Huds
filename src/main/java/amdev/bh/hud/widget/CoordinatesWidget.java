@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 public class CoordinatesWidget implements HudWidget {
@@ -41,13 +41,17 @@ public class CoordinatesWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
-		if (client.player == null) {
-			return;
-		}
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		boolean decimals = widgetConfig.toggle("coords_decimals", true);
 		String text;
-		if (widgetConfig.showText()) {
+		if (client.player == null) {
+			if (!context.editorMode()) {
+				return;
+			}
+			text = widgetConfig.showText()
+				? (decimals ? "X 123.4  Y 64.0  Z -987.6" : "X 123  Y 64  Z -988")
+				: (decimals ? "123.4 64.0 -987.6" : "123 64 -988");
+		} else if (widgetConfig.showText()) {
 			text = decimals
 				? String.format("X %.1f  Y %.1f  Z %.1f", client.player.getX(), client.player.getY(), client.player.getZ())
 				: String.format("X %.0f  Y %.0f  Z %.0f", client.player.getX(), client.player.getY(), client.player.getZ());
@@ -58,6 +62,6 @@ public class CoordinatesWidget implements HudWidget {
 		}
 		int drawX = x + Math.max(0, (getWidth(client, context.config(), widgetConfig) - client.font.width(text)) / 2);
 		int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 131);
-		graphics.drawString(client.font, text, drawX, y + 3, color, false);
+		graphics.text(client.font, text, drawX, y + 3, color, false);
 	}
 }

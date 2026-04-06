@@ -10,8 +10,10 @@ public class ResolvedWidget {
 	private final int baseWidth;
 	private final int baseHeight;
 	private final float appliedScale;
+	private final float baseReferenceX;
+	private final float baseReferenceY;
 
-	public ResolvedWidget(HudWidget widget, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y, int baseWidth, int baseHeight, float appliedScale) {
+	public ResolvedWidget(HudWidget widget, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y, int baseWidth, int baseHeight, float appliedScale, float baseReferenceX, float baseReferenceY) {
 		this.widget = widget;
 		this.widgetConfig = widgetConfig;
 		this.x = x;
@@ -19,6 +21,8 @@ public class ResolvedWidget {
 		this.baseWidth = baseWidth;
 		this.baseHeight = baseHeight;
 		this.appliedScale = appliedScale;
+		this.baseReferenceX = baseReferenceX;
+		this.baseReferenceY = baseReferenceY;
 	}
 
 	public HudWidget widget() {
@@ -47,6 +51,22 @@ public class ResolvedWidget {
 
 	public float appliedScale() {
 		return appliedScale;
+	}
+
+	public float scaledReferenceX() {
+		return baseReferenceX * appliedScale;
+	}
+
+	public float scaledReferenceY() {
+		return baseReferenceY * appliedScale;
+	}
+
+	public float screenReferenceX() {
+		return x + scaledReferenceX();
+	}
+
+	public float screenReferenceY() {
+		return y + scaledReferenceY();
 	}
 
 	public int scaledWidth() {

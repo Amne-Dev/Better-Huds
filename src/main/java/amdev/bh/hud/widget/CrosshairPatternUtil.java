@@ -4,8 +4,11 @@ import amdev.bh.config.BetterHudsConfig;
 
 public final class CrosshairPatternUtil {
 	public static final int GRID_SMALL = 8;
+	public static final int GRID_CENTERED = 15;
 	public static final int GRID_LARGE = 16;
-	public static final int MAX_GRID = GRID_LARGE;
+	public static final int GRID_XL = 30;
+	public static final int MAX_GRID = GRID_XL;
+	private static final int[] GRID_SIZES = {GRID_SMALL, GRID_CENTERED, GRID_LARGE, GRID_XL};
 
 	private CrosshairPatternUtil() {
 	}
@@ -19,12 +22,21 @@ public final class CrosshairPatternUtil {
 	}
 
 	public static int gridSize(BetterHudsConfig.WidgetConfig cfg) {
-		int raw = cfg.intValue("crosshair_grid_size", GRID_LARGE);
-		return raw <= GRID_SMALL ? GRID_SMALL : GRID_LARGE;
+		return normalizeGridSize(cfg.intValue("crosshair_grid_size", GRID_LARGE));
 	}
 
 	public static void setGridSize(BetterHudsConfig.WidgetConfig cfg, int size) {
-		cfg.setIntValue("crosshair_grid_size", size <= GRID_SMALL ? GRID_SMALL : GRID_LARGE);
+		cfg.setIntValue("crosshair_grid_size", normalizeGridSize(size));
+	}
+
+	public static int nextGridSize(int current) {
+		int normalized = normalizeGridSize(current);
+		for (int i = 0; i < GRID_SIZES.length; i++) {
+			if (GRID_SIZES[i] == normalized) {
+				return GRID_SIZES[(i + 1) % GRID_SIZES.length];
+			}
+		}
+		return GRID_LARGE;
 	}
 
 	public static int pixelSize(BetterHudsConfig.WidgetConfig cfg) {
@@ -67,6 +79,24 @@ public final class CrosshairPatternUtil {
 
 	private static boolean inBounds(int x, int y) {
 		return x >= 0 && y >= 0 && x < MAX_GRID && y < MAX_GRID;
+	}
+
+	private static int normalizeGridSize(int raw) {
+		for (int size : GRID_SIZES) {
+			if (raw == size) {
+				return size;
+			}
+		}
+		if (raw <= GRID_SMALL) {
+			return GRID_SMALL;
+		}
+		if (raw <= GRID_CENTERED) {
+			return GRID_CENTERED;
+		}
+		if (raw <= GRID_LARGE) {
+			return GRID_LARGE;
+		}
+		return GRID_XL;
 	}
 
 	private static String pixelKey(int x, int y) {

@@ -4,7 +4,7 @@ import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -31,7 +31,7 @@ public class PerformanceWidget implements HudWidget {
 	}
 
 	@Override
-	public void render(GuiGraphics graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
+	public void render(GuiGraphicsExtractor graphics, Minecraft client, HudRenderContext context, BetterHudsConfig.WidgetConfig widgetConfig, int x, int y) {
 		int fps = Math.max(0, client.getFps());
 		int avgFps = context.metrics().averageFps();
 		int onePercentLow = context.metrics().onePercentLowFps();
@@ -52,8 +52,8 @@ public class PerformanceWidget implements HudWidget {
 			return;
 		}
 
-		graphics.drawString(client.font, String.format("FPS %d A%d L%d  P%d  T%.1f", fps, avgFps, onePercentLow, ping, tps), x, y + 2, widgetConfig.textColor, false);
-		graphics.drawString(client.font, String.format("M%d/%d GPU%.0f%% S%s", usedMemMb, maxMemMb, gpuUtil, WidgetRenderUtil.formatDurationSeconds(context.metrics().sessionSeconds())), x, y + 15, widgetConfig.textColor, false);
+		graphics.text(client.font, String.format("FPS %d A%d L%d  P%d  T%.1f", fps, avgFps, onePercentLow, ping, tps), x, y + 2, widgetConfig.textColor, false);
+		graphics.text(client.font, String.format("M%d/%d GPU%.0f%% S%s", usedMemMb, maxMemMb, gpuUtil, WidgetRenderUtil.formatDurationSeconds(context.metrics().sessionSeconds())), x, y + 15, widgetConfig.textColor, false);
 	}
 
 	private static int resolvePing(Minecraft client) {
