@@ -4,7 +4,7 @@ This page is the user-focused guide for Better Huds.
 
 ## Requirements
 
-- Minecraft `>=1.21`
+- Minecraft `1.21.8`, `1.21.11`, `26.1`, or `26.2` (use the matching jar)
 - Fabric Loader `0.18.0+`
 - Fabric API
 
@@ -65,7 +65,7 @@ Keybinds can be changed in Minecraft controls, and the Better Huds keybinds tab 
 - Build all configured versions: `.\build-all-versions.bat`
 - Build matrix file: `scripts/build-profiles.json`
 - Multi-version artifacts output: `build/multi-version/<minecraft-version>/`
-- Use `compat_group` in `scripts/build-profiles.json` to group close versions (example: `1.21.9-1.21.10`)
+- Use `compat_group` in `scripts/build-profiles.json` only when multiple targets are intentionally verified as binary-compatible.
 - Default build-all behavior is every profile/version (use `-BuildByCompatGroup` for one build per `compat_group`)
 
 ## API for Other Mod Authors

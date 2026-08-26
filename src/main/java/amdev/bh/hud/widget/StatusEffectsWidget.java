@@ -5,16 +5,24 @@ import amdev.bh.hud.HudRenderContext;
 import amdev.bh.hud.HudWidget;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffectUtil;
 import net.minecraft.world.entity.player.Player;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class StatusEffectsWidget implements HudWidget {
+	private static final int ICON_SIZE = 18;
+	private static final int ICON_GAP = 4;
+	private static final int TEXT_WIDTH = 112;
+	private static final int ROW_HEIGHT = 22;
+	private static final Method MOB_EFFECT_SPRITE_METHOD = findMobEffectSpriteMethod();
 
 	@Override
 	public String id() {
@@ -48,7 +56,10 @@ public class StatusEffectsWidget implements HudWidget {
 		if (!showText && !showIcons) {
 			return 8;
 		}
-		return showIcons ? 194 : 176;
+		if (!showText) {
+			return ICON_SIZE;
+		}
+		return showIcons ? ICON_SIZE + ICON_GAP + TEXT_WIDTH : TEXT_WIDTH;
 	}
 
 	@Override
@@ -59,7 +70,7 @@ public class StatusEffectsWidget implements HudWidget {
 			return 8;
 		}
 		if (client.player == null) {
-			return showIcons ? 20 : 16;
+			return ROW_HEIGHT;
 		}
 		int effects = client.player.getActiveEffects().size();
 		int maxLines = widgetConfig.toggle("compact_mode", true) ? 3 : 6;
@@ -67,8 +78,7 @@ public class StatusEffectsWidget implements HudWidget {
 		if (effects > maxLines) {
 			lines++;
 		}
-		int rowHeight = showIcons ? 18 : 14;
-		return (lines * rowHeight) + 4;
+		return lines * ROW_HEIGHT;
 	}
 
 	@Override
@@ -99,17 +109,16 @@ public class StatusEffectsWidget implements HudWidget {
 		}
 
 		int maxLines = widgetConfig.toggle("compact_mode", true) ? 3 : 6;
-		int rowHeight = showIcons ? 18 : 14;
 		int drawn = 0;
 		for (MobEffectInstance effect : effects) {
 			if (drawn >= maxLines) {
 				break;
 			}
 
-			int lineY = y + (drawn * rowHeight);
-			int iconX = alignRight ? x + Math.max(0, widgetWidth - 16) : x;
+			int lineY = y + (drawn * ROW_HEIGHT);
+			int iconX = alignRight ? x + Math.max(0, widgetWidth - ICON_SIZE) : x;
 			if (showIcons) {
-				drawEffectIcon(graphics, client, effect, iconX, lineY);
+				drawEffectIcon(graphics, effect, iconX, lineY + 1);
 			}
 
 			if (!showText) {
@@ -118,27 +127,21 @@ public class StatusEffectsWidget implements HudWidget {
 			}
 
 			String name = effect.getEffect().value().getDisplayName().getString();
-			int level = effect.getAmplifier() + 1;
-			String duration = hideTime ? "" : MobEffectUtil.formatDuration(effect, 1.0F, 1.0F).getString();
-			String suffix = hideTime ? "" : " " + duration;
-			String text = level > 1 ? name + " " + level + suffix : name + suffix;
-			int color = 0xFF000000 | effect.getEffect().value().getColor();
-			if (widgetConfig.toggle("rainbow_text", false)) {
-				color = WidgetRenderUtil.rainbowColor(773 + drawn * 13);
+			String duration = hideTime ? "" : MobEffectUtil.formatDuration(effect, 1.0F, 20.0F).getString();
+			String title = name + " " + amplifierLabel(effect.getAmplifier());
+			int color = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 773 + drawn * 13);
+			int textLeft = alignRight ? x : x + (showIcons ? ICON_SIZE + ICON_GAP : 0);
+			int textRight = alignRight && showIcons ? iconX - ICON_GAP : x + widgetWidth;
+			int maxWidth = Math.max(10, textRight - textLeft);
+			String clippedTitle = client.font.plainSubstrByWidth(title, maxWidth);
+			int titleX = alignRight ? textRight - client.font.width(clippedTitle) : textLeft;
+			int titleY = lineY + (hideTime ? 6 : 1);
+			graphics.text(client.font, clippedTitle, titleX, titleY, color, true);
+			if (!hideTime) {
+				String clippedDuration = client.font.plainSubstrByWidth(duration, maxWidth);
+				int durationX = alignRight ? textRight - client.font.width(clippedDuration) : textLeft;
+				graphics.text(client.font, clippedDuration, durationX, lineY + 11, color, true);
 			}
-			int maxWidth = showIcons ? Math.max(10, widgetWidth - 20) : Math.max(10, widgetWidth);
-			if (showIcons && alignRight) {
-				maxWidth = Math.max(10, iconX - x - 4);
-			}
-			String clipped = client.font.plainSubstrByWidth(text, maxWidth);
-			int textX;
-			if (alignRight) {
-				int rightEdge = showIcons ? (iconX - 4) : (x + widgetWidth);
-				textX = rightEdge - client.font.width(clipped);
-			} else {
-				textX = x + (showIcons ? 20 : 0);
-			}
-			graphics.text(client.font, clipped, textX, lineY + (showIcons ? 4 : 0), color, false);
 			drawn++;
 		}
 
@@ -151,17 +154,57 @@ public class StatusEffectsWidget implements HudWidget {
 			} else {
 				textX = x + (showIcons ? 20 : 0);
 			}
-			graphics.text(client.font, text, textX, y + (maxLines * rowHeight), 0xFFAAAAAA, false);
+			graphics.text(client.font, text, textX, y + (maxLines * ROW_HEIGHT) + 5, 0xFFAAAAAA, true);
 		}
 	}
 
-	private static void drawEffectIcon(GuiGraphicsExtractor graphics, Minecraft client, MobEffectInstance effect, int x, int y) {
-		int color = 0xFF000000 | effect.getEffect().value().getColor();
-		graphics.fill(x, y, x + 16, y + 16, 0xAA000000);
-		graphics.fill(x + 1, y + 1, x + 15, y + 15, color);
-		String label = effect.getEffect().value().getDisplayName().getString();
-		String shortLabel = label.isBlank() ? "?" : label.substring(0, 1).toUpperCase();
-		int textX = x + (16 - client.font.width(shortLabel)) / 2;
-		graphics.text(client.font, shortLabel, textX, y + 4, 0xFFFFFFFF, false);
+	private static void drawEffectIcon(GuiGraphicsExtractor graphics, MobEffectInstance effect, int x, int y) {
+		Identifier sprite = mobEffectSprite(effect);
+		if (sprite != null) {
+			graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, ICON_SIZE, ICON_SIZE);
+		}
+	}
+
+	private static Identifier mobEffectSprite(MobEffectInstance effect) {
+		if (MOB_EFFECT_SPRITE_METHOD == null) {
+			return null;
+		}
+		try {
+			Object sprite = MOB_EFFECT_SPRITE_METHOD.invoke(null, effect.getEffect());
+			return sprite instanceof Identifier identifier ? identifier : null;
+		} catch (ReflectiveOperationException ignored) {
+			return null;
+		}
+	}
+
+	private static Method findMobEffectSpriteMethod() {
+		for (String className : List.of("net.minecraft.client.gui.Hud", "net.minecraft.client.gui.Gui")) {
+			try {
+				for (Method method : Class.forName(className).getMethods()) {
+					if (method.getName().equals("getMobEffectSprite") && method.getParameterCount() == 1) {
+						return method;
+					}
+				}
+			} catch (ReflectiveOperationException ignored) {
+				// Try the class used by the other supported 26.x release.
+			}
+		}
+		return null;
+	}
+
+	private static String amplifierLabel(int amplifier) {
+		return switch (amplifier + 1) {
+			case 1 -> "I";
+			case 2 -> "II";
+			case 3 -> "III";
+			case 4 -> "IV";
+			case 5 -> "V";
+			case 6 -> "VI";
+			case 7 -> "VII";
+			case 8 -> "VIII";
+			case 9 -> "IX";
+			case 10 -> "X";
+			default -> Integer.toString(amplifier + 1);
+		};
 	}
 }

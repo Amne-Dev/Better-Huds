@@ -10,7 +10,7 @@ def sanitizeLabel = { String raw ->
 }
 
 def buildMinecraftVersion = project.minecraft_version.toString()
-def supportedMinecraftVersions = ['1.21', '1.21.8', '1.21.11', '26.1', '26.2']
+def supportedMinecraftVersions = ['1.21.8', '1.21.11', '26.1', '26.2']
 if (!supportedMinecraftVersions.contains(buildMinecraftVersion)) {
 	throw new GradleException("Unsupported Minecraft version '${buildMinecraftVersion}'. Supported versions: ${supportedMinecraftVersions.join(', ')}")
 }
