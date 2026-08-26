@@ -179,7 +179,7 @@ public class ItemCounterSetupScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreen(null);
+			McCompat.setScreen(minecraft, null);
 		}
 	}
 

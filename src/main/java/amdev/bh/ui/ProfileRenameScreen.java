@@ -3,6 +3,7 @@ package amdev.bh.ui;
 import amdev.bh.config.BetterHudsConfig;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.ui.widget.GlassButton;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -72,7 +73,7 @@ public class ProfileRenameScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

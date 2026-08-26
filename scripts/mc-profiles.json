@@ -1,32 +1,32 @@
 [
   {
-    "name": "Custom patch version",
-    "minecraft_version": "",
-    "fabric_api_version": "",
-    "loader_version": "0.18.5"
+    "name": "1.21",
+    "minecraft_version": "1.21",
+    "fabric_api_version": "0.102.0+1.21",
+    "loader_version": "0.19.3"
   },
   {
-    "name": "1.21.10",
-    "minecraft_version": "1.21.10",
-    "fabric_api_version": "0.138.4+1.21.10",
-    "loader_version": "0.18.4"
+    "name": "1.21.8",
+    "minecraft_version": "1.21.8",
+    "fabric_api_version": "0.136.1+1.21.8",
+    "loader_version": "0.19.3"
   },
   {
-    "name": "1.21.9",
-    "minecraft_version": "1.21.9",
-    "fabric_api_version": "0.134.1+1.21.9",
-    "loader_version": "0.18.4"
-  },
-  {
-    "name": "1.21.11 (project default)",
+    "name": "1.21.11",
     "minecraft_version": "1.21.11",
-    "fabric_api_version": "0.141.3+1.21.11",
-    "loader_version": "0.18.4"
+    "fabric_api_version": "0.141.6+1.21.11",
+    "loader_version": "0.19.3"
   },
   {
-    "name": "26.1 (project default)",
+    "name": "26.1",
     "minecraft_version": "26.1",
-    "fabric_api_version": "0.144.3+26.1",
-    "loader_version": "0.18.5"
+    "fabric_api_version": "0.145.1+26.1",
+    "loader_version": "0.19.3"
+  },
+  {
+    "name": "26.2 (project default)",
+    "minecraft_version": "26.2",
+    "fabric_api_version": "0.158.0+26.2",
+    "loader_version": "0.19.3"
   }
 ]

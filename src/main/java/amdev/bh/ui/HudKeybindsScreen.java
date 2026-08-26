@@ -2,6 +2,7 @@ package amdev.bh.ui;
 
 import amdev.bh.hud.HudSystem;
 import amdev.bh.ui.widget.GlassButton;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -39,7 +40,7 @@ public class HudKeybindsScreen extends Screen {
 	@Override
 	public void onClose() {
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

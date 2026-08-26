@@ -74,12 +74,12 @@ public class HudSettingsScreen extends Screen {
 		addRenderableWidget(new GlassButton(panelX + panelWidth - 90, panelY + 8, 80, 20, Component.translatable("screen.better-huds.back"), button -> onClose()));
 		addRenderableWidget(new GlassButton(contentX + 10, panelY + 8, 80, 20, Component.translatable("screen.better-huds.settings.global"), button -> {
 			if (minecraft != null) {
-				minecraft.setScreen(new HudGlobalSettingsScreen(hudSystem, this));
+				McCompat.setScreen(minecraft, new HudGlobalSettingsScreen(hudSystem, this));
 			}
 		}));
 		addRenderableWidget(new GlassButton(contentX + 96, panelY + 8, 92, 20, Component.translatable("screen.better-huds.settings.keybinds"), button -> {
 			if (minecraft != null) {
-				minecraft.setScreen(new HudKeybindsScreen(hudSystem, this));
+				McCompat.setScreen(minecraft, new HudKeybindsScreen(hudSystem, this));
 			}
 		}));
 
@@ -122,7 +122,7 @@ public class HudSettingsScreen extends Screen {
 
 			addRenderableWidget(new GlassButton(x + 10, y + cardHeight - 24, cardWidth - 20, 16, Component.translatable("screen.better-huds.settings.widget_settings"), button -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new WidgetSettingsScreen(hudSystem, this, widget.id()));
+					McCompat.setScreen(minecraft, new WidgetSettingsScreen(hudSystem, this, widget.id()));
 				}
 			}));
 		}
@@ -151,7 +151,7 @@ public class HudSettingsScreen extends Screen {
 		int footerY = panelY + panelHeight - 52;
 		addRenderableWidget(new GlassButton(buttonX, footerY, width, 20, Component.translatable("screen.better-huds.settings.import_profile"), button -> {
 			if (minecraft != null) {
-				minecraft.setScreen(new ProfileImportScreen(hudSystem, this));
+				McCompat.setScreen(minecraft, new ProfileImportScreen(hudSystem, this));
 			}
 		}));
 		addRenderableWidget(new GlassButton(buttonX, footerY + 22, width, 20, Component.translatable("screen.better-huds.settings.add_profile"), button -> {
@@ -186,7 +186,7 @@ public class HudSettingsScreen extends Screen {
 			boolean inExport = mouseX >= menuX + 1 && mouseX < menuX + menuWidth - 1 && mouseY >= menuY + 39 && mouseY < menuY + 56;
 			if (inRename) {
 				if (minecraft != null && profileMenuIndex >= 0) {
-					minecraft.setScreen(new ProfileRenameScreen(hudSystem, this, profileMenuIndex));
+					McCompat.setScreen(minecraft, new ProfileRenameScreen(hudSystem, this, profileMenuIndex));
 				}
 				profileMenuVisible = false;
 				return true;
@@ -298,8 +298,9 @@ public class HudSettingsScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

@@ -30,7 +30,7 @@ function Load-Profiles {
 		if ([string]::IsNullOrWhiteSpace($minecraftVersion) -or [string]::IsNullOrWhiteSpace($fabricApiVersion)) {
 			continue
 		}
-		$loaderVersion = if ([string]::IsNullOrWhiteSpace([string]$profile.loader_version)) { "0.18.5" } else { [string]$profile.loader_version }
+		$loaderVersion = if ([string]::IsNullOrWhiteSpace([string]$profile.loader_version)) { "0.19.3" } else { [string]$profile.loader_version }
 		$name = if ([string]::IsNullOrWhiteSpace([string]$profile.name)) { $minecraftVersion } else { [string]$profile.name }
 		$compatGroup = if ([string]::IsNullOrWhiteSpace([string]$profile.compat_group)) { $minecraftVersion } else { [string]$profile.compat_group }
 		$minecraftDependency = if ([string]::IsNullOrWhiteSpace([string]$profile.minecraft_dependency)) { $minecraftVersion } else { [string]$profile.minecraft_dependency }

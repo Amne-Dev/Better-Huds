@@ -6,6 +6,7 @@ import amdev.bh.hud.HudLayout;
 import amdev.bh.hud.HudSystem;
 import amdev.bh.hud.ResolvedWidget;
 import amdev.bh.ui.widget.GlassButton;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -47,7 +48,7 @@ public class HudEditorScreen extends Screen {
 			Component.translatable("screen.better-huds.editor.open_settings"),
 			button -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new HudSettingsScreen(hudSystem, this));
+					McCompat.setScreen(minecraft, new HudSettingsScreen(hudSystem, this));
 				}
 			}
 		));
@@ -72,8 +73,9 @@ public class HudEditorScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(null);
+			McCompat.setScreen(minecraft, null);
 		}
 	}
 
@@ -164,7 +166,7 @@ public class HudEditorScreen extends Screen {
 		}
 
 		if (doubleClick && minecraft != null) {
-			minecraft.setScreen(new WidgetSettingsScreen(hudSystem, this, settingsTargetWidgetId(hit.widget().id())));
+			McCompat.setScreen(minecraft, new WidgetSettingsScreen(hudSystem, this, settingsTargetWidgetId(hit.widget().id())));
 			return true;
 		}
 

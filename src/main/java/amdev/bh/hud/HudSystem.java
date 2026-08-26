@@ -17,7 +17,9 @@ import amdev.bh.hud.widget.ItemCounterWidget;
 import amdev.bh.hud.widget.ItemHistoryWidget;
 import amdev.bh.hud.widget.KeystrokesWidget;
 import amdev.bh.hud.widget.MiniInventoryWidget;
+import amdev.bh.hud.widget.PerformanceWidget;
 import amdev.bh.hud.widget.PingWidget;
+import amdev.bh.hud.widget.PlayerInfoWidget;
 import amdev.bh.hud.widget.SprintStatusWidget;
 import amdev.bh.hud.widget.StatusEffectsWidget;
 import amdev.bh.hud.widget.SpeedWidget;
@@ -98,6 +100,8 @@ public class HudSystem {
 		registry.register(new ItemCounterWidget());
 		registry.register(new StatusEffectsWidget());
 		registry.register(new MiniInventoryWidget());
+		registry.register(new PerformanceWidget());
+		registry.register(new PlayerInfoWidget());
 		registerExternalWidgets();
 	}
 
@@ -139,11 +143,11 @@ public class HudSystem {
 		}
 
 		while (openEditorKey.consumeClick()) {
-			client.setScreen(new HudEditorScreen(this));
+			McCompat.setScreen(client, new HudEditorScreen(this));
 		}
 
 		while (setupItemCounterKey.consumeClick()) {
-			client.setScreen(new ItemCounterSetupScreen(this, detectHeldItemId(client)));
+			McCompat.setScreen(client, new ItemCounterSetupScreen(this, detectHeldItemId(client)));
 		}
 
 		BetterHudsConfig.WidgetConfig miniCfg = config().getOrCreateWidgetConfig("mini_inventory");
@@ -166,10 +170,10 @@ public class HudSystem {
 		if (!config.hudEnabled) {
 			return;
 		}
-		if (config.hideWhenF1 && client.options.hideGui) {
+		if (config.hideWhenF1 && McCompat.isGuiHidden(client)) {
 			return;
 		}
-		if (config.hideInChat && client.screen != null && client.screen.getClass().getSimpleName().equals("ChatScreen")) {
+		if (isHiddenInChat(client, config)) {
 			return;
 		}
 		WidgetRenderUtil.setChromaSpeed(config.chromaSpeed);
@@ -199,27 +203,34 @@ public class HudSystem {
 
 		var pose = graphics.pose();
 		PoseCompat.push(pose);
-		PoseCompat.translate(pose, resolved.x(), resolved.y());
-		PoseCompat.scale(pose, resolved.appliedScale(), resolved.appliedScale());
+		try {
+			PoseCompat.translate(pose, resolved.x(), resolved.y());
+			PoseCompat.scale(pose, resolved.appliedScale(), resolved.appliedScale());
 
-		int backgroundColor = forcedBackground != 0 ? forcedBackground : resolved.widgetConfig().backgroundColor;
-		int borderColor = context.editorMode() ? 0xFF80D8FF : 0x88FFFFFF;
-		boolean allowWidgetBackground = !resolved.widget().id().equals("keystrokes")
-			&& !resolved.widget().id().equals("crosshair");
-		if (allowWidgetBackground && (resolved.widgetConfig().background || context.editorMode())) {
-			int pad = 2;
-			int left = -pad;
-			int top = -pad;
-			int right = resolved.baseWidth() + pad;
-			int bottom = resolved.baseHeight() + pad;
-			graphics.fill(left, top, right, bottom, backgroundColor);
-			graphics.fill(left, top, right, top + 1, borderColor);
-			graphics.fill(left, bottom - 1, right, bottom, borderColor);
-			graphics.fill(left, top, left + 1, bottom, borderColor);
-			graphics.fill(right - 1, top, right, bottom, borderColor);
+			int backgroundColor = forcedBackground != 0 ? forcedBackground : resolved.widgetConfig().backgroundColor;
+			int borderColor = context.editorMode() ? 0xFF80D8FF : 0x88FFFFFF;
+			boolean allowWidgetBackground = !resolved.widget().id().equals("keystrokes")
+				&& !resolved.widget().id().equals("crosshair");
+			if (allowWidgetBackground && (resolved.widgetConfig().background || context.editorMode())) {
+				int pad = 2;
+				int left = -pad;
+				int top = -pad;
+				int right = resolved.baseWidth() + pad;
+				int bottom = resolved.baseHeight() + pad;
+				graphics.fill(left, top, right, bottom, backgroundColor);
+				graphics.fill(left, top, right, top + 1, borderColor);
+				graphics.fill(left, bottom - 1, right, bottom, borderColor);
+				graphics.fill(left, top, left + 1, bottom, borderColor);
+				graphics.fill(right - 1, top, right, bottom, borderColor);
+			}
+			resolved.widget().render(graphics, client, context, resolved.widgetConfig(), 0, 0);
+		} catch (Exception exception) {
+			// A misbehaving widget (especially a third-party API widget) must not
+			// take down the whole HUD or corrupt the pose stack for later widgets.
+			BetterHuds.LOGGER.error("Better Huds: widget '{}' failed to render", resolved.widget().id(), exception);
+		} finally {
+			PoseCompat.pop(pose);
 		}
-		resolved.widget().render(graphics, client, context, resolved.widgetConfig(), 0, 0);
-		PoseCompat.pop(pose);
 	}
 
 	public List<ResolvedWidget> getResolvedWidgets(boolean includeDisabled) {
@@ -274,11 +285,19 @@ public class HudSystem {
 		if (!cfg.hudEnabled) {
 			return false;
 		}
-		if (cfg.hideWhenF1 && client.options.hideGui) {
+		if (cfg.hideWhenF1 && McCompat.isGuiHidden(client)) {
+			return false;
+		}
+		if (isHiddenInChat(client, cfg)) {
 			return false;
 		}
 		BetterHudsConfig.WidgetConfig crosshairCfg = cfg.getOrCreateWidgetConfig("crosshair");
 		return crosshairCfg.enabled;
+	}
+
+	private static boolean isHiddenInChat(Minecraft client, BetterHudsConfig config) {
+		var screen = McCompat.currentScreen(client);
+		return config.hideInChat && screen != null && screen.getClass().getSimpleName().equals("ChatScreen");
 	}
 
 	public HudWidget widget(String id) {
@@ -307,7 +326,8 @@ public class HudSystem {
 
 	private boolean minecraftBlockedForMiniInventory() {
 		Minecraft client = Minecraft.getInstance();
-		return client == null || client.player == null || (client.screen != null && !(client.screen instanceof HudEditorScreen));
+		var screen = McCompat.currentScreen(client);
+		return client == null || client.player == null || (screen != null && !(screen instanceof HudEditorScreen));
 	}
 
 	private String detectHeldItemId(Minecraft client) {

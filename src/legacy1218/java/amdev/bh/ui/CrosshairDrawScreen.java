@@ -151,8 +151,9 @@ public class CrosshairDrawScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

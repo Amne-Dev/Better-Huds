@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -16,6 +17,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +27,13 @@ public final class McCompat {
 	private static final Pattern MC_121_PATTERN = Pattern.compile("^1\\.21(?:\\.(\\d+))?.*");
 	private static final String BETTER_HUDS_KEY_CATEGORY = "key.categories.better-huds";
 	private static Boolean disableUiBlurCache;
+	/**
+	 * Cache for {@link #findItemById}. Item lookups happen every frame from the
+	 * item counter / item history widgets, and each miss previously triggered a
+	 * full registry scan with string comparisons. Items never change after
+	 * registry freeze, so an unbounded cache is safe.
+	 */
+	private static final Map<String, Item> ITEM_ID_CACHE = new ConcurrentHashMap<>();
 
 	private McCompat() {
 	}
@@ -33,6 +43,10 @@ public final class McCompat {
 			return Items.AIR;
 		}
 		String normalized = normalizeItemId(rawItemId);
+		return ITEM_ID_CACHE.computeIfAbsent(normalized, McCompat::resolveItemById);
+	}
+
+	private static Item resolveItemById(String normalized) {
 		Item direct = findExact(normalized);
 		if (direct != Items.AIR) {
 			return direct;
@@ -146,6 +160,46 @@ public final class McCompat {
 			// Fallback false.
 		}
 		return false;
+	}
+
+	public static void setScreen(Minecraft client, Screen screen) {
+		if (client == null) {
+			return;
+		}
+		if (invokeOneArg(client, "setScreenAndShow", screen) || invokeOneArg(client, "setScreen", screen)) {
+			return;
+		}
+		Object gui = readField(client, "gui");
+		invokeOneArg(gui, "setScreen", screen);
+	}
+
+	public static Screen currentScreen(Minecraft client) {
+		if (client == null) {
+			return null;
+		}
+		Object screen = readField(client, "screen");
+		if (!(screen instanceof Screen)) {
+			Object gui = readField(client, "gui");
+			screen = invokeNoArgs(gui, "screen");
+			if (!(screen instanceof Screen)) {
+				screen = readField(gui, "screen");
+			}
+		}
+		return screen instanceof Screen value ? value : null;
+	}
+
+	public static boolean isGuiHidden(Minecraft client) {
+		if (client == null) {
+			return false;
+		}
+		Object hidden = readField(client.options, "hideGui");
+		if (hidden instanceof Boolean value) {
+			return value;
+		}
+		Object gui = readField(client, "gui");
+		Object hud = readField(gui, "hud");
+		hidden = invokeNoArgs(hud, "isHidden");
+		return hidden instanceof Boolean value && value;
 	}
 
 	public static KeyMapping createKeyMapping(String key, int defaultKey) {
@@ -384,6 +438,28 @@ public final class McCompat {
 		} catch (Exception ignored) {
 			return null;
 		}
+	}
+
+	private static boolean invokeOneArg(Object target, String methodName, Object argument) {
+		if (target == null) {
+			return false;
+		}
+		for (Method method : target.getClass().getMethods()) {
+			if (!method.getName().equals(methodName) || method.getParameterCount() != 1) {
+				continue;
+			}
+			Class<?> parameterType = method.getParameterTypes()[0];
+			if (argument != null && !parameterType.isInstance(argument)) {
+				continue;
+			}
+			try {
+				method.invoke(target, argument);
+				return true;
+			} catch (Exception ignored) {
+				// Try another overload.
+			}
+		}
+		return false;
 	}
 
 	private static Component invokeComponent(Object target, String methodName) {

@@ -6,6 +6,7 @@ import amdev.bh.hud.HudWidget;
 import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.ui.widget.GlassButton;
 import amdev.bh.ui.widget.GlassSlider;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -66,7 +67,7 @@ public class HudGlobalSettingsScreen extends Screen {
 			() -> Component.translatable("screen.better-huds.settings.all_text_color", WidgetRenderUtil.shortColor(referenceTextColor())),
 			() -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.all_text_color", ""), referenceTextColor(), color -> {
+					McCompat.setScreen(minecraft, new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.all_text_color", ""), referenceTextColor(), color -> {
 						applyAllTextColor(color);
 					}));
 				}
@@ -75,7 +76,7 @@ public class HudGlobalSettingsScreen extends Screen {
 			() -> Component.translatable("screen.better-huds.settings.all_bg_color", WidgetRenderUtil.shortColor(referenceBackgroundColor())),
 			() -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.all_bg_color", ""), referenceBackgroundColor(), color -> {
+					McCompat.setScreen(minecraft, new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.all_bg_color", ""), referenceBackgroundColor(), color -> {
 						applyAllBackgroundColor(color);
 					}));
 				}
@@ -208,8 +209,9 @@ public class HudGlobalSettingsScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

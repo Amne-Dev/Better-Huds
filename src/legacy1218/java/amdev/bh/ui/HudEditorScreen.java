@@ -50,7 +50,7 @@ public class HudEditorScreen extends Screen {
 			Component.translatable("screen.better-huds.editor.open_settings"),
 			button -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new HudSettingsScreen(hudSystem, this));
+					McCompat.setScreen(minecraft, new HudSettingsScreen(hudSystem, this));
 				}
 			}
 		));
@@ -75,8 +75,9 @@ public class HudEditorScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(null);
+			McCompat.setScreen(minecraft, null);
 		}
 	}
 
@@ -118,6 +119,7 @@ public class HudEditorScreen extends Screen {
 				int[] clamped = applyEdgeSnapAndClamp(selectedWidgetId, widgetConfig.x, widgetConfig.y, !ignoreSnap);
 				widgetConfig.x = clamped[0];
 				widgetConfig.y = clamped[1];
+				widgetConfig.touch();
 				hudSystem.configManager().save();
 				return true;
 			}
@@ -167,7 +169,7 @@ public class HudEditorScreen extends Screen {
 		boolean doubleClick = isWidgetDoubleClick(hit.widget().id(), mouseX, mouseY);
 		recordClick(hit.widget().id(), mouseX, mouseY);
 		if (doubleClick && minecraft != null) {
-			minecraft.setScreen(new WidgetSettingsScreen(hudSystem, this, settingsTargetWidgetId(hit.widget().id())));
+			McCompat.setScreen(minecraft, new WidgetSettingsScreen(hudSystem, this, settingsTargetWidgetId(hit.widget().id())));
 			return true;
 		}
 
@@ -358,11 +360,13 @@ public class HudEditorScreen extends Screen {
 			if (Math.abs((y + height) - screenH) <= edgeThreshold) {
 				y = screenH - height;
 			}
-			if (Math.abs((x + width / 2) - (screenW / 2)) <= edgeThreshold) {
-				x = (screenW - width) / 2;
+			float referenceX = resolved != null ? resolved.scaledReferenceX() : width / 2.0F;
+			float referenceY = resolved != null ? resolved.scaledReferenceY() : height / 2.0F;
+			if (Math.abs((x + referenceX) - (screenW / 2.0F)) <= edgeThreshold) {
+				x = Math.round((screenW / 2.0F) - referenceX);
 			}
-			if (Math.abs((y + height / 2) - (screenH / 2)) <= edgeThreshold) {
-				y = (screenH - height) / 2;
+			if (Math.abs((y + referenceY) - (screenH / 2.0F)) <= edgeThreshold) {
+				y = Math.round((screenH / 2.0F) - referenceY);
 			}
 		}
 
@@ -387,8 +391,8 @@ public class HudEditorScreen extends Screen {
 		int horizontalColor = 0x4480D8FF;
 		ResolvedWidget selected = selectedWidgetId == null ? null : resolveWidget(selectedWidgetId);
 		if (selected != null) {
-			int selectedCenterX = selected.x() + selected.scaledWidth() / 2;
-			int selectedCenterY = selected.y() + selected.scaledHeight() / 2;
+			float selectedCenterX = selected.screenReferenceX();
+			float selectedCenterY = selected.screenReferenceY();
 			if (Math.abs(selectedCenterX - centerX) <= 8) {
 				verticalColor = 0xCC80D8FF;
 			}

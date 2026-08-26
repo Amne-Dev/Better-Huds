@@ -10,6 +10,7 @@ import amdev.bh.ui.widget.GlassButton;
 import amdev.bh.ui.widget.GlassSlider;
 import amdev.bh.hud.widget.WidgetRenderUtil;
 import amdev.bh.util.PoseCompat;
+import amdev.bh.util.McCompat;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -128,7 +129,7 @@ public class WidgetSettingsScreen extends Screen {
 			() -> Component.translatable("screen.better-huds.settings.text_color", WidgetRenderUtil.shortColor(cfg().textColor)),
 			() -> {
 				if (minecraft != null) {
-					minecraft.setScreen(new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.text_color", ""), cfg().textColor, color -> {
+					McCompat.setScreen(minecraft, new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.text_color", ""), cfg().textColor, color -> {
 						cfg().textColor = color;
 						cfg().touch();
 					}));
@@ -145,7 +146,7 @@ public class WidgetSettingsScreen extends Screen {
 					Component title = keystrokes
 						? Component.translatable("screen.better-huds.settings.ks_key_bg_color", "")
 						: Component.translatable("screen.better-huds.settings.bg_color", "");
-					minecraft.setScreen(new ColorPickerScreen(this, title, cfg().backgroundColor, color -> {
+					McCompat.setScreen(minecraft, new ColorPickerScreen(this, title, cfg().backgroundColor, color -> {
 						cfg().backgroundColor = color;
 						cfg().touch();
 					}));
@@ -161,7 +162,7 @@ public class WidgetSettingsScreen extends Screen {
 				() -> {
 					if (minecraft != null) {
 						int current = cfg().intValue("ks_pressed_text_color", 0xFFFFFFFF);
-						minecraft.setScreen(new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.ks_pressed_text_color", ""), current, color -> {
+						McCompat.setScreen(minecraft, new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.ks_pressed_text_color", ""), current, color -> {
 							cfg().setIntValue("ks_pressed_text_color", color);
 						}));
 					}
@@ -173,7 +174,7 @@ public class WidgetSettingsScreen extends Screen {
 				() -> {
 					if (minecraft != null) {
 						int current = cfg().intValue("ks_pressed_bg_color", cfg().backgroundColor);
-						minecraft.setScreen(new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.ks_pressed_bg_color", ""), current, color -> {
+						McCompat.setScreen(minecraft, new ColorPickerScreen(this, Component.translatable("screen.better-huds.settings.ks_pressed_bg_color", ""), current, color -> {
 							cfg().setIntValue("ks_pressed_bg_color", color);
 						}));
 					}
@@ -343,7 +344,7 @@ public class WidgetSettingsScreen extends Screen {
 				() -> Component.translatable("screen.better-huds.settings.crosshair_draw_editor"),
 				() -> {
 					if (minecraft != null) {
-						minecraft.setScreen(new CrosshairDrawScreen(hudSystem, this));
+						McCompat.setScreen(minecraft, new CrosshairDrawScreen(hudSystem, this));
 					}
 				},
 				false);
@@ -653,8 +654,9 @@ public class WidgetSettingsScreen extends Screen {
 	@Override
 	public void onClose() {
 		hudSystem.configManager().save();
+		hudSystem.configManager().flushPendingSave();
 		if (minecraft != null) {
-			minecraft.setScreen(parent);
+			McCompat.setScreen(minecraft, parent);
 		}
 	}
 

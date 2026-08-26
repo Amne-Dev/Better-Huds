@@ -1,6 +1,6 @@
 # Better Huds
 
-Better Huds is a modular Fabric HUD mod for Minecraft `1.21.x` with draggable widgets, profiles, and per-widget customization.
+Better Huds is a modular Fabric HUD mod with draggable widgets, profiles, and per-widget customization.
 
 ## Documentation
 
@@ -11,8 +11,8 @@ Better Huds is a modular Fabric HUD mod for Minecraft `1.21.x` with draggable wi
 
 ## Supported Versions
 
-- Runtime dependency range in `fabric.mod.json`: Minecraft `>=1.21`
-- Build profiles included in this repo: `1.21` through `1.21.11`, plus `26.1`
+- Supported build/runtime targets: `1.21`, `1.21.8`, `1.21.11`, `26.1`, and `26.2`
+- Each generated jar declares its exact Minecraft target in `fabric.mod.json`.
 
 ## Quick API Start
 
@@ -99,12 +99,11 @@ Default task is `runClient`. You can pass a different task:
 - `.\run-version.bat build`
 - `.\scripts\run-version.ps1 -Task runServer`
 
-Profiles are stored in `scripts/mc-profiles.json`. Add more entries there to get them in the selection menu.
-Current presets include `1.21.9`, `1.21.10`, `1.21.11`, `26.1`, and a custom profile.
+Profiles are stored in `scripts/mc-profiles.json`. The launcher only offers the five supported targets.
 
 Build one version directly with Gradle:
 
-- `.\gradlew.bat -Pminecraft_version=26.1 -Pfabric_api_version=0.144.3+26.1 -Ploader_version=0.18.5 build`
+- `.\gradlew.bat -Pminecraft_version=26.2 -Pfabric_api_version=0.158.0+26.2 -Ploader_version=0.19.3 build`
 
 ## Build All Versions Script
 
@@ -135,4 +134,4 @@ Useful flags:
 
 Artifacts are exported to `build/multi-version/<minecraft-version>/` by default.
 When using `-BuildByCompatGroup`, artifacts are exported to `build/multi-version/<compat-group>/`.
-Each jar embeds build metadata in `fabric.mod.json` (`custom.build`) and uses a version/build label like `1.1+mc1.21.10`.
+Each jar embeds build metadata in `fabric.mod.json` (`custom.build`) and uses a version/build label like `1.1+mc1.21.11`.

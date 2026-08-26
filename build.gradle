@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'fabric-loom' version "${loom_version}" apply false
 	id 'maven-publish'
 }
 
@@ -10,6 +10,11 @@ def sanitizeLabel = { String raw ->
 }
 
 def buildMinecraftVersion = project.minecraft_version.toString()
+def supportedMinecraftVersions = ['1.21', '1.21.8', '1.21.11', '26.1', '26.2']
+if (!supportedMinecraftVersions.contains(buildMinecraftVersion)) {
+	throw new GradleException("Unsupported Minecraft version '${buildMinecraftVersion}'. Supported versions: ${supportedMinecraftVersions.join(', ')}")
+}
+apply plugin: buildMinecraftVersion.startsWith("26.") ? 'net.fabricmc.fabric-loom' : 'net.fabricmc.fabric-loom-remap'
 def buildCompatGroup = (findProperty("mc_compat_group") ?: buildMinecraftVersion).toString()
 def buildProfileName = (findProperty("build_profile_name") ?: buildCompatGroup).toString()
 def buildDependencyRange = (findProperty("mc_dependency_range") ?: buildMinecraftVersion).toString()
@@ -42,8 +47,12 @@ def isLegacy1218 = { String version ->
 	return patch <= 8
 }
 
-def useLegacyInputUi = isLegacy1218(project.minecraft_version.toString())
-if (useLegacyInputUi) {
+def useLegacyMinecraft = buildMinecraftVersion.startsWith("1.21")
+def useLegacyInputUi = isLegacy1218(buildMinecraftVersion)
+if (useLegacyMinecraft) {
+	def legacyMinecraftFiles = fileTree('src/legacy12111/java') {
+		include '**/*.java'
+	}.files.collect { file('src/legacy12111/java').toPath().relativize(it.toPath()).toString().replace('\\', '/') }
 	def legacyUiFiles = [
 		'amdev/bh/ui/HudEditorScreen.java',
 		'amdev/bh/ui/ColorPickerScreen.java',
@@ -53,23 +62,41 @@ if (useLegacyInputUi) {
 		'amdev/bh/ui/widget/GlassButton.java'
 	]
 
-	sourceSets.main.java.srcDir 'src/legacy1218/java'
+	sourceSets.main.java.srcDir 'src/legacy12111/java'
+	if (useLegacyInputUi) {
+		sourceSets.main.java.srcDir 'src/legacy1218/java'
+	}
 	tasks.withType(JavaCompile).configureEach { task ->
 		task.setSource(files(
 			fileTree('src/main/java') {
-				exclude legacyUiFiles
+				exclude legacyMinecraftFiles
 			},
-			fileTree('src/legacy1218/java')
+			fileTree('src/legacy12111/java') {
+				if (useLegacyInputUi) {
+					exclude legacyUiFiles
+				}
+			},
+			useLegacyInputUi ? fileTree('src/legacy1218/java') : files()
 		))
 	}
 	tasks.matching { it.name == 'sourcesJar' }.configureEach { task ->
 		task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 		task.from(fileTree('src/main/java') {
-			exclude legacyUiFiles
+			exclude legacyMinecraftFiles
 		})
-		task.from(fileTree('src/legacy1218/java'))
+		task.from(fileTree('src/legacy12111/java') {
+			if (useLegacyInputUi) {
+				exclude legacyUiFiles
+			}
+		})
+		if (useLegacyInputUi) {
+			task.from(fileTree('src/legacy1218/java'))
+		}
 	}
-	logger.lifecycle("Better Huds: enabling legacy UI input shims for Minecraft ${project.minecraft_version}")
+	logger.lifecycle("Better Huds: enabling the 1.21 compatibility sources for Minecraft ${buildMinecraftVersion}")
+	if (useLegacyInputUi) {
+		logger.lifecycle("Better Huds: enabling legacy UI input shims for Minecraft ${buildMinecraftVersion}")
+	}
 }
 
 repositories {
@@ -83,11 +110,14 @@ repositories {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-	
+	if (!buildMinecraftVersion.startsWith("26.")) {
+		mappings loom.officialMojangMappings()
+		modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	} else {
+		implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+		implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	}
 }
 
 processResources {
@@ -111,6 +141,15 @@ processResources {
 			"fabric_api_dependency": inputs.properties.fabric_api_dependency,
 			"java_dependency": inputs.properties.java_dependency
 		)
+	}
+
+	filesMatching("better-huds.mixins.json") {
+		filter { line ->
+			if (useLegacyMinecraft && line.trim() == '"client": [') {
+				return line + System.lineSeparator() + '\t\t"GuiMixin",'
+			}
+			return line
+		}
 	}
 }
 

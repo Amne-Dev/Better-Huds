@@ -36,7 +36,7 @@ public class BetterHudsClient implements ClientModInitializer {
 				buttonWidth,
 				20,
 				Component.translatable("screen.better-huds.main_menu_editor"),
-				btn -> client.setScreen(new HudEditorScreen(hudSystem))
+				btn -> McCompat.setScreen(client, new HudEditorScreen(hudSystem))
 			);
 			McCompat.addButtonToScreen(screen, editorButton);
 		});
