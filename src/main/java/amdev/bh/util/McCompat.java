@@ -166,26 +166,14 @@ public final class McCompat {
 		if (client == null) {
 			return;
 		}
-		if (invokeOneArg(client, "setScreenAndShow", screen) || invokeOneArg(client, "setScreen", screen)) {
-			return;
-		}
-		Object gui = readField(client, "gui");
-		invokeOneArg(gui, "setScreen", screen);
+		ScreenCompat.setScreen(client, screen);
 	}
 
 	public static Screen currentScreen(Minecraft client) {
 		if (client == null) {
 			return null;
 		}
-		Object screen = readField(client, "screen");
-		if (!(screen instanceof Screen)) {
-			Object gui = readField(client, "gui");
-			screen = invokeNoArgs(gui, "screen");
-			if (!(screen instanceof Screen)) {
-				screen = readField(gui, "screen");
-			}
-		}
-		return screen instanceof Screen value ? value : null;
+		return ScreenCompat.currentScreen(client);
 	}
 
 	public static boolean isGuiHidden(Minecraft client) {

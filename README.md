@@ -11,7 +11,7 @@ Better Huds is a modular Fabric HUD mod with draggable widgets, profiles, and pe
 
 ## Supported Versions
 
-- Supported build/runtime targets: `1.21.8`, `1.21.11`, `26.1`, and `26.2`
+- Supported build/runtime targets: `1.21`, `1.21.8`, `1.21.11`, `26.1`, and `26.2`
 - Each generated jar declares its exact Minecraft target in `fabric.mod.json`.
 
 ## Quick API Start
@@ -103,7 +103,7 @@ Profiles are stored in `scripts/mc-profiles.json`. The launcher only offers the 
 
 Build one version directly with Gradle:
 
-- `.\gradlew.bat -Pminecraft_version=26.2 -Pfabric_api_version=0.158.0+26.2 -Ploader_version=0.19.3 build`
+- `.\gradlew.bat -Pminecraft_version=26.2 -Pfabric_api_version=0.158.0+26.2 -Ploader_version=0.18.4 build`
 
 ## Build All Versions Script
 

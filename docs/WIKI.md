@@ -4,7 +4,7 @@ This page is the user-focused guide for Better Huds.
 
 ## Requirements
 
-- Minecraft `1.21.8`, `1.21.11`, `26.1`, or `26.2` (use the matching jar)
+- Minecraft `1.21`, `1.21.8`, `1.21.11`, `26.1`, or `26.2` (use the matching jar)
 - Fabric Loader `0.18.0+`
 - Fabric API
 

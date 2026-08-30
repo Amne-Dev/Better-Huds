@@ -12,7 +12,7 @@ The public extension surface is:
 
 ## Version Target
 
-- Runtime targets maintained in this repository: Minecraft `1.21.8`, `1.21.11`, `26.1`, and `26.2` (`fabric.mod.json`)
+- Runtime targets maintained in this repository: Minecraft `1.21`, `1.21.8`, `1.21.11`, `26.1`, and `26.2` (`fabric.mod.json`)
 - Each target has its own entry in `scripts/build-profiles.json` and produces a version-specific jar.
 - API is intentionally small and stable, but this is still a mod API, so verify behavior when updating Better Huds versions.
 

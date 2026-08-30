@@ -10,7 +10,7 @@ def sanitizeLabel = { String raw ->
 }
 
 def buildMinecraftVersion = project.minecraft_version.toString()
-def supportedMinecraftVersions = ['1.21.8', '1.21.11', '26.1', '26.2']
+def supportedMinecraftVersions = ['1.21', '1.21.8', '1.21.11', '26.1', '26.2']
 if (!supportedMinecraftVersions.contains(buildMinecraftVersion)) {
 	throw new GradleException("Unsupported Minecraft version '${buildMinecraftVersion}'. Supported versions: ${supportedMinecraftVersions.join(', ')}")
 }
@@ -19,7 +19,15 @@ def buildCompatGroup = (findProperty("mc_compat_group") ?: buildMinecraftVersion
 def buildProfileName = (findProperty("build_profile_name") ?: buildCompatGroup).toString()
 def buildDependencyRange = (findProperty("mc_dependency_range") ?: buildMinecraftVersion).toString()
 def buildVersionLabel = sanitizeLabel((findProperty("build_version_label") ?: buildMinecraftVersion).toString())
-def fabricLoaderDependencyRange = (findProperty("fabric_loader_dependency") ?: ">=0.18.0").toString()
+def minimumFabricLoaderVersions = [
+	'1.21': '0.16.14',
+	'1.21.8': '0.16.14',
+	'1.21.11': '0.17.3',
+	'26.1': '0.18.4',
+	'26.2': '0.18.4'
+]
+def minimumFabricLoaderVersion = minimumFabricLoaderVersions[buildMinecraftVersion]
+def fabricLoaderDependencyRange = (findProperty("fabric_loader_dependency") ?: ">=${minimumFabricLoaderVersion}").toString()
 def fabricApiDependencyRange = (findProperty("fabric_api_dependency") ?: "*").toString()
 def javaDependencyRange = (findProperty("java_dependency") ?: (buildMinecraftVersion.startsWith("26.") ? ">=25" : ">=21")).toString()
 def archiveCompatLabel = sanitizeLabel(buildCompatGroup)
@@ -49,10 +57,14 @@ def isLegacy1218 = { String version ->
 
 def useLegacyMinecraft = buildMinecraftVersion.startsWith("1.21")
 def useLegacyInputUi = isLegacy1218(buildMinecraftVersion)
+def useLegacy121 = buildMinecraftVersion == '1.21'
 if (useLegacyMinecraft) {
 	def legacyMinecraftFiles = fileTree('src/legacy12111/java') {
 		include '**/*.java'
 	}.files.collect { file('src/legacy12111/java').toPath().relativize(it.toPath()).toString().replace('\\', '/') }
+	def legacy121Files = useLegacy121 ? fileTree('src/legacy121/java') {
+		include '**/*.java'
+	}.files.collect { file('src/legacy121/java').toPath().relativize(it.toPath()).toString().replace('\\', '/') } : []
 	def legacyUiFiles = [
 		'amdev/bh/ui/HudEditorScreen.java',
 		'amdev/bh/ui/ColorPickerScreen.java',
@@ -66,31 +78,40 @@ if (useLegacyMinecraft) {
 	if (useLegacyInputUi) {
 		sourceSets.main.java.srcDir 'src/legacy1218/java'
 	}
+	if (useLegacy121) {
+		sourceSets.main.java.srcDir 'src/legacy121/java'
+	}
 	tasks.withType(JavaCompile).configureEach { task ->
 		task.setSource(files(
 			fileTree('src/main/java') {
-				exclude legacyMinecraftFiles
+				exclude legacyMinecraftFiles + legacy121Files
 			},
 			fileTree('src/legacy12111/java') {
+				exclude legacy121Files
 				if (useLegacyInputUi) {
 					exclude legacyUiFiles
 				}
 			},
-			useLegacyInputUi ? fileTree('src/legacy1218/java') : files()
+			useLegacyInputUi ? fileTree('src/legacy1218/java') : files(),
+			useLegacy121 ? fileTree('src/legacy121/java') : files()
 		))
 	}
 	tasks.matching { it.name == 'sourcesJar' }.configureEach { task ->
 		task.setDuplicatesStrategy(DuplicatesStrategy.EXCLUDE)
 		task.from(fileTree('src/main/java') {
-			exclude legacyMinecraftFiles
+			exclude legacyMinecraftFiles + legacy121Files
 		})
 		task.from(fileTree('src/legacy12111/java') {
+			exclude legacy121Files
 			if (useLegacyInputUi) {
 				exclude legacyUiFiles
 			}
 		})
 		if (useLegacyInputUi) {
 			task.from(fileTree('src/legacy1218/java'))
+		}
+		if (useLegacy121) {
+			task.from(fileTree('src/legacy121/java'))
 		}
 	}
 	logger.lifecycle("Better Huds: enabling the 1.21 compatibility sources for Minecraft ${buildMinecraftVersion}")
