@@ -143,7 +143,7 @@ public class StatusEffectsWidget implements HudWidget {
 
 		if (effects.size() > maxLines && showText) {
 			int remaining = effects.size() - maxLines;
-			String text = "+" + remaining + " more";
+			String text = Component.translatable("widget.better-huds.effects_overflow", remaining).getString();
 			int textX;
 			if (alignRight) {
 				textX = x + Math.max(0, widgetWidth - client.font.width(text));

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Gui.class)
 public class GuiMixin {
-	@Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true, require = 0)
 	private void betterHuds$cancelVanillaCrosshair(GuiGraphicsExtractor graphics, DeltaTracker tickCounter, CallbackInfo ci) {
 		HudSystem hudSystem = BetterHudsClient.hudSystem();
 		if (hudSystem == null) {

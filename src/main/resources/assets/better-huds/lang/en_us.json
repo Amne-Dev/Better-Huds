@@ -188,5 +188,7 @@
   "widget.better-huds.no_armor": "No armor equipped",
   "widget.better-huds.no_effects": "No active effects",
   "widget.better-huds.item_history_empty": "No recent item changes",
-  "widget.better-huds.item_counter_unset": "Set item/target with item-counter keybind"
+  "widget.better-huds.item_counter_unset": "Set item/target with item-counter keybind",
+  "screen.better-huds.settings.paste_clipboard": "Paste Clipboard",
+  "widget.better-huds.effects_overflow": "+%d more"
 }

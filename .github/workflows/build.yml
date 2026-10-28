@@ -1,7 +1,5 @@
 # Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+# and submitted pull request across all supported Minecraft versions.
 
 name: build
 on: [pull_request, push]
@@ -9,6 +7,28 @@ on: [pull_request, push]
 jobs:
   build:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft:
+          - version: "26.3"
+            fabric_api: "0.165.0+26.3"
+            loader: "0.20.1"
+          - version: "26.2"
+            fabric_api: "0.158.0+26.2"
+            loader: "0.18.4"
+          - version: "26.1"
+            fabric_api: "0.145.1+26.1"
+            loader: "0.18.4"
+          - version: "1.21.11"
+            fabric_api: "0.141.6+1.21.11"
+            loader: "0.17.3"
+          - version: "1.21.8"
+            fabric_api: "0.136.1+1.21.8"
+            loader: "0.16.14"
+          - version: "1.21"
+            fabric_api: "0.116.15+1.21.1"
+            loader: "0.16.14"
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
@@ -22,9 +42,9 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew build
+        run: ./gradlew -Pminecraft_version=${{ matrix.minecraft.version }} -Pfabric_api_version=${{ matrix.minecraft.fabric_api }} -Ploader_version=${{ matrix.minecraft.loader }} build
       - name: capture build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
+          name: Artifacts-mc${{ matrix.minecraft.version }}
           path: build/libs/

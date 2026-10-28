@@ -20,6 +20,8 @@ public class MetricsTracker {
 	private long lastFpsSampleMs;
 	private boolean previousLeftDown;
 	private boolean previousRightDown;
+	private int cachedAverageFps;
+	private int cachedOnePercentLow;
 
 	public void tick(Minecraft client) {
 		long now = System.currentTimeMillis();
@@ -29,6 +31,7 @@ public class MetricsTracker {
 			while (fpsSamples.size() > FPS_SAMPLES) {
 				fpsSamples.removeFirst();
 			}
+			updateFpsMetrics();
 			lastFpsSampleMs = now;
 		}
 
@@ -47,6 +50,24 @@ public class MetricsTracker {
 
 		pruneClicks(leftClicks, now);
 		pruneClicks(rightClicks, now);
+	}
+
+	private void updateFpsMetrics() {
+		if (fpsSamples.isEmpty()) {
+			cachedAverageFps = 0;
+			cachedOnePercentLow = 0;
+			return;
+		}
+		int total = 0;
+		for (int sample : fpsSamples) {
+			total += sample;
+		}
+		cachedAverageFps = Math.round((float) total / fpsSamples.size());
+
+		List<Integer> sorted = new ArrayList<>(fpsSamples);
+		Collections.sort(sorted);
+		int index = Math.max(0, (int) Math.floor((sorted.size() - 1) * 0.01D));
+		cachedOnePercentLow = sorted.get(index);
 	}
 
 	private static void pruneClicks(Deque<Long> clicks, long now) {
@@ -68,23 +89,10 @@ public class MetricsTracker {
 	}
 
 	public int averageFps() {
-		if (fpsSamples.isEmpty()) {
-			return 0;
-		}
-		int total = 0;
-		for (int sample : fpsSamples) {
-			total += sample;
-		}
-		return Math.round((float) total / fpsSamples.size());
+		return cachedAverageFps;
 	}
 
 	public int onePercentLowFps() {
-		if (fpsSamples.isEmpty()) {
-			return 0;
-		}
-		List<Integer> sorted = new ArrayList<>(fpsSamples);
-		Collections.sort(sorted);
-		int index = Math.max(0, (int) Math.floor((sorted.size() - 1) * 0.01D));
-		return sorted.get(index);
+		return cachedOnePercentLow;
 	}
 }

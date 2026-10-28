@@ -5,17 +5,21 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import amdev.bh.hud.Anchor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class ProfileShareCodec {
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final String PREFIX = "bh1:";
 
 	private ProfileShareCodec() {
 	}
 
 	public static String encode(BetterHudsConfig.Profile profile) {
-		return GSON.toJson(profile);
+		String json = GSON.toJson(profile);
+		return PREFIX + Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
 	}
 
 	public static BetterHudsConfig.Profile decode(String raw) {
@@ -23,13 +27,23 @@ public final class ProfileShareCodec {
 			return null;
 		}
 
-		BetterHudsConfig.Profile direct = parseProfile(raw);
+		String trimmed = raw.trim();
+		if (trimmed.startsWith(PREFIX)) {
+			try {
+				byte[] decodedBytes = Base64.getDecoder().decode(trimmed.substring(PREFIX.length()).trim());
+				trimmed = new String(decodedBytes, StandardCharsets.UTF_8);
+			} catch (IllegalArgumentException ignored) {
+				return null;
+			}
+		}
+
+		BetterHudsConfig.Profile direct = parseProfile(trimmed);
 		if (direct != null) {
 			return sanitizeProfile(direct);
 		}
 
 		try {
-			BetterHudsConfig full = GSON.fromJson(raw, BetterHudsConfig.class);
+			BetterHudsConfig full = GSON.fromJson(trimmed, BetterHudsConfig.class);
 			if (full == null || full.profiles == null || full.profiles.isEmpty()) {
 				return null;
 			}
@@ -74,7 +88,7 @@ public final class ProfileShareCodec {
 			}
 			BetterHudsConfig.WidgetConfig copy = new BetterHudsConfig.WidgetConfig(source.x, source.y, source.anchor == null ? Anchor.TOP_LEFT : source.anchor);
 			copy.enabled = source.enabled;
-			copy.scale = source.scale;
+			copy.scale = (!Float.isFinite(source.scale) || source.scale < 0.25F || source.scale > 4.0F) ? 1.0F : source.scale;
 			copy.background = source.background;
 			copy.showText = source.showText;
 			copy.backgroundColor = source.backgroundColor;

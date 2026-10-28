@@ -8,6 +8,7 @@ import amdev.bh.ui.widget.GlassButton;
 import amdev.bh.util.McCompat;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
 
@@ -19,6 +20,7 @@ public class BetterHudsClient implements ClientModInitializer {
 		hudSystem = new HudSystem(new ConfigManager());
 		hudSystem.initialize();
 		registerMainMenuButton();
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> hudSystem.configManager().flushPendingSave());
 		BetterHuds.LOGGER.info("Better Huds client initialized");
 	}
 

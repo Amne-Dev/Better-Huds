@@ -44,7 +44,7 @@ public class ConfigManager {
 			BetterHuds.LOGGER.error("Failed to read config at {}", configPath, exception);
 		}
 
-		if (config == null) {
+		if (config == null || config.profiles == null || config.profiles.isEmpty()) {
 			config = BetterHudsConfig.createDefault();
 			backUpUnreadableConfig();
 			save();
@@ -93,8 +93,14 @@ public class ConfigManager {
 			if (parent != null) {
 				Files.createDirectories(parent);
 			}
-			try (Writer writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
+			Path tempPath = configPath.resolveSibling(configPath.getFileName() + ".tmp");
+			try (Writer writer = Files.newBufferedWriter(tempPath, StandardCharsets.UTF_8)) {
 				GSON.toJson(config, writer);
+			}
+			try {
+				Files.move(tempPath, configPath, java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+			} catch (java.io.IOException moveEx) {
+				Files.move(tempPath, configPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 			}
 		} catch (IOException exception) {
 			BetterHuds.LOGGER.error("Failed to write config at {}", configPath, exception);

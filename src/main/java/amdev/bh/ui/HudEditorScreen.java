@@ -12,7 +12,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 import java.util.List;
 
@@ -82,7 +82,7 @@ public class HudEditorScreen extends Screen {
 	@Override
 	public boolean keyPressed(KeyEvent event) {
 		int key = event.key();
-		if (key == GLFW.GLFW_KEY_ESCAPE) {
+		if (key == KeyCodes.KEY_ESCAPE) {
 			onClose();
 			return true;
 		}
@@ -93,22 +93,21 @@ public class HudEditorScreen extends Screen {
 			boolean ignoreSnap = minecraft != null && minecraft.hasControlDown();
 			int step = ignoreSnap ? 1 : config.getGridSizeOrDefault();
 			boolean moved = false;
-			if (key == GLFW.GLFW_KEY_LEFT) {
+			if (key == KeyCodes.KEY_LEFT) {
 				widgetConfig.x -= step;
 				moved = true;
-			} else if (key == GLFW.GLFW_KEY_RIGHT) {
+			} else if (key == KeyCodes.KEY_RIGHT) {
 				widgetConfig.x += step;
 				moved = true;
-			} else if (key == GLFW.GLFW_KEY_UP) {
+			} else if (key == KeyCodes.KEY_UP) {
 				widgetConfig.y -= step;
 				moved = true;
-			} else if (key == GLFW.GLFW_KEY_DOWN) {
+			} else if (key == KeyCodes.KEY_DOWN) {
 				widgetConfig.y += step;
 				moved = true;
 			}
 
 			if (moved) {
-				widgetConfig.anchor = Anchor.TOP_LEFT;
 				if (config.snapToGrid && !ignoreSnap) {
 					int grid = config.getGridSizeOrDefault();
 					widgetConfig.x = HudLayout.snap(widgetConfig.x, grid);
@@ -132,7 +131,7 @@ public class HudEditorScreen extends Screen {
 			return true;
 		}
 
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (event.button() != KeyCodes.MOUSE_BUTTON_LEFT) {
 			return false;
 		}
 
@@ -186,11 +185,11 @@ public class HudEditorScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (resizingWidgetId != null && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (resizingWidgetId != null && event.button() == KeyCodes.MOUSE_BUTTON_LEFT) {
 			return resizeWidget(event);
 		}
 
-		if (draggingWidgetId == null || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (draggingWidgetId == null || event.button() != KeyCodes.MOUSE_BUTTON_LEFT) {
 			return super.mouseDragged(event, dragX, dragY);
 		}
 
@@ -220,12 +219,38 @@ public class HudEditorScreen extends Screen {
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
 		if (draggingWidgetId != null || resizingWidgetId != null) {
+			if (draggingWidgetId != null) {
+				snapToClosestAnchor(draggingWidgetId);
+			} else if (resizingWidgetId != null) {
+				snapToClosestAnchor(resizingWidgetId);
+			}
 			draggingWidgetId = null;
 			resizingWidgetId = null;
 			hudSystem.configManager().save();
 			return true;
 		}
 		return super.mouseReleased(event);
+	}
+
+	private void snapToClosestAnchor(String widgetId) {
+		if (widgetId == null || minecraft == null) {
+			return;
+		}
+		BetterHudsConfig config = hudSystem.config();
+		BetterHudsConfig.WidgetConfig widgetConfig = config.getOrCreateWidgetConfig(widgetId);
+		ResolvedWidget resolved = resolveWidget(widgetId);
+		if (resolved == null) {
+			return;
+		}
+		int screenW = minecraft.getWindow().getGuiScaledWidth();
+		int screenH = minecraft.getWindow().getGuiScaledHeight();
+		Anchor closest = HudLayout.getClosestAnchor(resolved.x(), resolved.y(), resolved.scaledWidth(), resolved.scaledHeight(), screenW, screenH);
+		float anchorBaseX = HudLayout.getAnchorBaseX(closest, screenW, resolved.scaledWidth(), resolved.scaledReferenceX());
+		float anchorBaseY = HudLayout.getAnchorBaseY(closest, screenH, resolved.scaledHeight(), resolved.scaledReferenceY());
+		widgetConfig.anchor = closest;
+		widgetConfig.x = Math.round(resolved.x() - anchorBaseX);
+		widgetConfig.y = Math.round(resolved.y() - anchorBaseY);
+		widgetConfig.touch();
 	}
 
 	@Override

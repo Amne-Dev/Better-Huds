@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -62,8 +63,11 @@ public class SurvivalWidget implements HudWidget {
 		}
 
 		FoodData food = player == null ? null : player.getFoodData();
-		int totems = player == null ? 1 : countItem(player.getInventory(), Items.TOTEM_OF_UNDYING);
-		int arrows = player == null ? 32 : countItem(player.getInventory(), Items.ARROW) + countItem(player.getInventory(), Items.SPECTRAL_ARROW) + countItem(player.getInventory(), Items.TIPPED_ARROW);
+		if (player != null) {
+			updateSurvivalCounts(player.getInventory());
+		}
+		int totems = player == null ? 1 : cachedTotems;
+		int arrows = player == null ? 32 : cachedArrows;
 		float cooldown = player == null ? 0.86F : player.getAttackStrengthScale(0.0F);
 		boolean showCounts = widgetConfig.toggle("survival_show_counts", true);
 		int textColor = WidgetRenderUtil.widgetTextColor(widgetConfig, widgetConfig.textColor, 421);
@@ -104,6 +108,32 @@ public class SurvivalWidget implements HudWidget {
 		);
 		int line2X = x + Math.max(0, (width - client.font.width(line2)) / 2);
 		graphics.text(client.font, line2, line2X, y + 15, textColor, false);
+	}
+
+	private static int cachedTotems;
+	private static int cachedArrows;
+	private static long lastSurvivalCheckMs;
+
+	private static void updateSurvivalCounts(Inventory inventory) {
+		long now = System.currentTimeMillis();
+		if (now - lastSurvivalCheckMs < 100L) {
+			return;
+		}
+		int totems = 0;
+		int arrows = 0;
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
+			if (stack.isEmpty()) continue;
+			Item item = stack.getItem();
+			if (item == Items.TOTEM_OF_UNDYING) {
+				totems += stack.getCount();
+			} else if (item == Items.ARROW || item == Items.SPECTRAL_ARROW || item == Items.TIPPED_ARROW) {
+				arrows += stack.getCount();
+			}
+		}
+		cachedTotems = totems;
+		cachedArrows = arrows;
+		lastSurvivalCheckMs = now;
 	}
 
 	private static int countItem(Inventory inventory, net.minecraft.world.item.Item item) {

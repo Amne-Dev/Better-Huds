@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -102,6 +103,32 @@ public class SurvivalWidget implements HudWidget {
 		);
 		int line2X = x + Math.max(0, (width - client.font.width(line2)) / 2);
 		graphics.drawString(client.font, line2, line2X, y + 15, textColor, false);
+	}
+
+	private static int cachedTotems;
+	private static int cachedArrows;
+	private static long lastSurvivalCheckMs;
+
+	private static void updateSurvivalCounts(Inventory inventory) {
+		long now = System.currentTimeMillis();
+		if (now - lastSurvivalCheckMs < 100L) {
+			return;
+		}
+		int totems = 0;
+		int arrows = 0;
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
+			if (stack.isEmpty()) continue;
+			Item item = stack.getItem();
+			if (item == Items.TOTEM_OF_UNDYING) {
+				totems += stack.getCount();
+			} else if (item == Items.ARROW || item == Items.SPECTRAL_ARROW || item == Items.TIPPED_ARROW) {
+				arrows += stack.getCount();
+			}
+		}
+		cachedTotems = totems;
+		cachedArrows = arrows;
+		lastSurvivalCheckMs = now;
 	}
 
 	private static int countItem(Inventory inventory, net.minecraft.world.item.Item item) {

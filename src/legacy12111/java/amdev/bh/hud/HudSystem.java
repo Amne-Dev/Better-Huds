@@ -60,6 +60,17 @@ public class HudSystem {
 		this.configManager = configManager;
 	}
 
+	private final java.util.Map<String, Long> lastErrorLogMs = new java.util.concurrent.ConcurrentHashMap<>();
+
+	private void logWidgetRenderError(String widgetId, Exception exception) {
+		long now = System.currentTimeMillis();
+		Long lastLog = lastErrorLogMs.get(widgetId);
+		if (lastLog == null || now - lastLog > 5_000L) {
+			lastErrorLogMs.put(widgetId, now);
+			BetterHuds.LOGGER.error("Better Huds: widget '{}' failed to render (throttled)", widgetId, exception);
+		}
+	}
+
 	public void initialize() {
 		configManager.load();
 		registerWidgets();
@@ -235,8 +246,14 @@ public class HudSystem {
 				continue;
 			}
 
-			int width = Math.max(8, widget.getWidth(client, config, widgetConfig));
-			int height = Math.max(8, widget.getHeight(client, config, widgetConfig));
+			int width = 8;
+			int height = 8;
+			try {
+				width = Math.max(8, widget.getWidth(client, config, widgetConfig));
+				height = Math.max(8, widget.getHeight(client, config, widgetConfig));
+			} catch (Exception e) {
+				// Prevent faulty widget from crashing the layout
+			}
 			resolvedWidgets.add(HudLayout.resolve(client, widget, config, widgetConfig, screenWidth, screenHeight, width, height));
 		}
 
@@ -265,6 +282,9 @@ public class HudSystem {
 
 	public boolean shouldReplaceVanillaCrosshair(Minecraft client) {
 		if (client == null || client.player == null) {
+			return false;
+		}
+		if (client.options != null && client.options.getCameraType() != null && !client.options.getCameraType().isFirstPerson()) {
 			return false;
 		}
 		BetterHudsConfig cfg = config();

@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 import java.util.function.IntConsumer;
 
@@ -142,7 +142,7 @@ public class ColorPickerScreen extends Screen {
 		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (event.button() != KeyCodes.MOUSE_BUTTON_LEFT) {
 			return false;
 		}
 

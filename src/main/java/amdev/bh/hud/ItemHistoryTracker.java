@@ -24,6 +24,8 @@ public class ItemHistoryTracker {
 	public static final long ITEM_FADE_DURATION_MS = 3_000L;
 	private final Map<String, Integer> previousCounts = new HashMap<>();
 	private final Map<String, ItemHistoryEvent> activeItems = new LinkedHashMap<>();
+	private List<ItemHistoryEvent> cachedGroupedEvents = List.of();
+	private long lastGroupedCacheMs;
 	private boolean initialized;
 
 	public void tick(Minecraft client) {
@@ -92,8 +94,14 @@ public class ItemHistoryTracker {
 	}
 
 	public List<ItemHistoryEvent> groupedEvents() {
+		long now = System.currentTimeMillis();
+		if (now - lastGroupedCacheMs < 50L) {
+			return cachedGroupedEvents;
+		}
 		List<ItemHistoryEvent> grouped = new ArrayList<>(activeItems.values());
 		grouped.sort((left, right) -> Long.compare(right.timestampMs(), left.timestampMs()));
+		cachedGroupedEvents = grouped;
+		lastGroupedCacheMs = now;
 		return grouped;
 	}
 

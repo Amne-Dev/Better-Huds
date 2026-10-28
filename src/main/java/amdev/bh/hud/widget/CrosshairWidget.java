@@ -47,6 +47,16 @@ public class CrosshairWidget implements HudWidget {
 	}
 
 	@Override
+	public boolean shouldRender(Minecraft client, BetterHudsConfig config) {
+		if (client == null || client.player == null) {
+			return false;
+		}
+		if (client.options != null && client.options.getCameraType() != null && !client.options.getCameraType().isFirstPerson()) {
+			return false;
+		}
+		return true;
+	}
+
 	public float centerReferenceY(Minecraft client, BetterHudsConfig config, BetterHudsConfig.WidgetConfig widgetConfig) {
 		return visualCenter(widgetConfig);
 	}
@@ -86,6 +96,17 @@ public class CrosshairWidget implements HudWidget {
 
 			if (dot) {
 				drawRect(graphics, centerX, centerY, centerX + thickness, centerY + thickness, color, outline, outlineColor);
+			}
+
+			float attackStrength = client.player != null ? client.player.getAttackStrengthScale(0.0F) : 1.0F;
+			if (attackStrength < 1.0F && client.options != null && client.options.attackIndicator().get() != net.minecraft.client.AttackIndicatorStatus.OFF) {
+				int barY = centerY + gap + thickness + length + 4;
+				int barW = 16;
+				int barH = 2;
+				int barX = centerX - (barW / 2);
+				graphics.fill(barX - 1, barY - 1, barX + barW + 1, barY + barH + 1, 0x88000000);
+				int progressW = Math.round(barW * attackStrength);
+				graphics.fill(barX, barY, barX + progressW, barY + barH, 0xFFFFFFFF);
 			}
 		} finally {
 			if (invert) {

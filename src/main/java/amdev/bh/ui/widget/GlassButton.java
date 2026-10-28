@@ -7,7 +7,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 public class GlassButton extends AbstractWidget {
 	private final OnPress onPress;
@@ -51,7 +51,7 @@ public class GlassButton extends AbstractWidget {
 
 	@Override
 	public void onClick(MouseButtonEvent event, boolean doubleClick) {
-		if (!active || !visible || event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (!active || !visible || event.button() != KeyCodes.MOUSE_BUTTON_LEFT) {
 			return;
 		}
 		AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
@@ -64,7 +64,7 @@ public class GlassButton extends AbstractWidget {
 			return false;
 		}
 		int key = event.key();
-		if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER || key == GLFW.GLFW_KEY_SPACE) {
+		if (key == KeyCodes.KEY_ENTER || key == KeyCodes.KEY_KP_ENTER || key == KeyCodes.KEY_SPACE) {
 			AbstractWidget.playButtonClickSound(Minecraft.getInstance().getSoundManager());
 			onPress.onPress(this);
 			return true;

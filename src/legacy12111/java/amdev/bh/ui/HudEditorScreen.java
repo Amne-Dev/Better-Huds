@@ -109,7 +109,6 @@ public class HudEditorScreen extends Screen {
 			}
 
 			if (moved) {
-				widgetConfig.anchor = Anchor.TOP_LEFT;
 				if (config.snapToGrid && !ignoreSnap) {
 					int grid = config.getGridSizeOrDefault();
 					widgetConfig.x = HudLayout.snap(widgetConfig.x, grid);
@@ -221,12 +220,38 @@ public class HudEditorScreen extends Screen {
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
 		if (draggingWidgetId != null || resizingWidgetId != null) {
+			if (draggingWidgetId != null) {
+				snapToClosestAnchor(draggingWidgetId);
+			} else if (resizingWidgetId != null) {
+				snapToClosestAnchor(resizingWidgetId);
+			}
 			draggingWidgetId = null;
 			resizingWidgetId = null;
 			hudSystem.configManager().save();
 			return true;
 		}
 		return super.mouseReleased(event);
+	}
+
+	private void snapToClosestAnchor(String widgetId) {
+		if (widgetId == null || minecraft == null) {
+			return;
+		}
+		BetterHudsConfig config = hudSystem.config();
+		BetterHudsConfig.WidgetConfig widgetConfig = config.getOrCreateWidgetConfig(widgetId);
+		ResolvedWidget resolved = resolveWidget(widgetId);
+		if (resolved == null) {
+			return;
+		}
+		int screenW = minecraft.getWindow().getGuiScaledWidth();
+		int screenH = minecraft.getWindow().getGuiScaledHeight();
+		Anchor closest = HudLayout.getClosestAnchor(resolved.x(), resolved.y(), resolved.scaledWidth(), resolved.scaledHeight(), screenW, screenH);
+		float anchorBaseX = HudLayout.getAnchorBaseX(closest, screenW, resolved.scaledWidth(), resolved.scaledReferenceX());
+		float anchorBaseY = HudLayout.getAnchorBaseY(closest, screenH, resolved.scaledHeight(), resolved.scaledReferenceY());
+		widgetConfig.anchor = closest;
+		widgetConfig.x = Math.round(resolved.x() - anchorBaseX);
+		widgetConfig.y = Math.round(resolved.y() - anchorBaseY);
+		widgetConfig.touch();
 	}
 
 	@Override

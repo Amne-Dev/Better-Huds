@@ -45,7 +45,7 @@ import java.util.List;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 public class HudSystem {
 	private final ConfigManager configManager;
@@ -60,6 +60,18 @@ public class HudSystem {
 
 	public HudSystem(ConfigManager configManager) {
 		this.configManager = configManager;
+	}
+
+	
+	private final java.util.Map<String, Long> lastErrorLogMs = new java.util.concurrent.ConcurrentHashMap<>();
+
+	private void logWidgetRenderError(String widgetId, Exception exception) {
+		long now = System.currentTimeMillis();
+		Long lastLog = lastErrorLogMs.get(widgetId);
+		if (lastLog == null || now - lastLog > 5_000L) {
+			lastErrorLogMs.put(widgetId, now);
+			BetterHuds.LOGGER.error("Better Huds: widget '{}' failed to render (throttled)", widgetId, exception);
+		}
 	}
 
 	public void initialize() {
@@ -121,10 +133,10 @@ public class HudSystem {
 	}
 
 	private void registerKeybinds() {
-		openEditorKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.open_editor", GLFW.GLFW_KEY_RIGHT_SHIFT));
-		toggleHudKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.toggle_hud", GLFW.GLFW_KEY_H));
-		setupItemCounterKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.item_counter_setup", GLFW.GLFW_KEY_O));
-		toggleMiniInventoryKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.mini_inventory", GLFW.GLFW_KEY_V));
+		openEditorKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.open_editor", KeyCodes.KEY_RIGHT_SHIFT));
+		toggleHudKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.toggle_hud", KeyCodes.KEY_H));
+		setupItemCounterKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.item_counter_setup", KeyCodes.KEY_O));
+		toggleMiniInventoryKey = McCompat.registerKeyBinding(McCompat.createKeyMapping("key.better-huds.mini_inventory", KeyCodes.KEY_V));
 	}
 
 	private void onClientTick(Minecraft client) {
@@ -225,9 +237,7 @@ public class HudSystem {
 			}
 			resolved.widget().render(graphics, client, context, resolved.widgetConfig(), 0, 0);
 		} catch (Exception exception) {
-			// A misbehaving widget (especially a third-party API widget) must not
-			// take down the whole HUD or corrupt the pose stack for later widgets.
-			BetterHuds.LOGGER.error("Better Huds: widget '{}' failed to render", resolved.widget().id(), exception);
+			logWidgetRenderError(resolved.widget().id(), exception);
 		} finally {
 			PoseCompat.pop(pose);
 		}
@@ -249,8 +259,14 @@ public class HudSystem {
 				continue;
 			}
 
-			int width = Math.max(8, widget.getWidth(client, config, widgetConfig));
-			int height = Math.max(8, widget.getHeight(client, config, widgetConfig));
+			int width = 8;
+			int height = 8;
+			try {
+				width = Math.max(8, widget.getWidth(client, config, widgetConfig));
+				height = Math.max(8, widget.getHeight(client, config, widgetConfig));
+			} catch (Exception e) {
+				// Prevent faulty widget from crashing the layout
+			}
 			resolvedWidgets.add(HudLayout.resolve(client, widget, config, widgetConfig, screenWidth, screenHeight, width, height));
 		}
 
@@ -279,6 +295,9 @@ public class HudSystem {
 
 	public boolean shouldReplaceVanillaCrosshair(Minecraft client) {
 		if (client == null || client.player == null) {
+			return false;
+		}
+		if (client.options != null && client.options.getCameraType() != null && !client.options.getCameraType().isFirstPerson()) {
 			return false;
 		}
 		BetterHudsConfig cfg = config();

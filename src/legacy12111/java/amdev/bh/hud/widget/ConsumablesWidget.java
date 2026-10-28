@@ -76,7 +76,7 @@ public class ConsumablesWidget implements HudWidget {
 		for (int i = 0; i < entries.size(); i++) {
 			Entry entry = entries.get(i);
 			int iconX = x + (i * 18);
-			graphics.renderItem(new ItemStack(entry.item()), iconX, y);
+			graphics.renderItem(entry.stack(), iconX, y);
 			if (widgetConfig.showText()) {
 				String count = Integer.toString(entry.count());
 				int countX = iconX + (16 - client.font.width(count)) / 2;
@@ -84,6 +84,12 @@ public class ConsumablesWidget implements HudWidget {
 			}
 		}
 	}
+
+	private static List<Entry> cachedEntries = List.of();
+	private static long lastCacheMs;
+	private static int lastMaxIcons = -1;
+	private static boolean lastFood;
+	private static boolean lastPotions;
 
 	private static List<Entry> collectEntries(Minecraft client, BetterHudsConfig.WidgetConfig widgetConfig, int maxIcons) {
 		Player player = client.player;
@@ -95,6 +101,11 @@ public class ConsumablesWidget implements HudWidget {
 		boolean includePotions = widgetConfig.toggle("consumables_potions", true);
 		if (!includeFood && !includePotions) {
 			return List.of();
+		}
+
+		long now = System.currentTimeMillis();
+		if (now - lastCacheMs < 100L && maxIcons == lastMaxIcons && includeFood == lastFood && includePotions == lastPotions) {
+			return cachedEntries;
 		}
 
 		Inventory inventory = player.getInventory();
@@ -116,12 +127,17 @@ public class ConsumablesWidget implements HudWidget {
 
 		List<Entry> entries = new ArrayList<>();
 		for (Map.Entry<Item, Integer> countEntry : counts.entrySet()) {
-			entries.add(new Entry(countEntry.getKey(), countEntry.getValue()));
+			entries.add(new Entry(countEntry.getKey(), countEntry.getValue(), new ItemStack(countEntry.getKey())));
 		}
 		entries.sort(Comparator.comparingInt(Entry::count).reversed().thenComparing(entry -> entry.item().toString()));
 		if (entries.size() > maxIcons) {
-			return new ArrayList<>(entries.subList(0, maxIcons));
+			entries = new ArrayList<>(entries.subList(0, maxIcons));
 		}
+		cachedEntries = entries;
+		lastCacheMs = now;
+		lastMaxIcons = maxIcons;
+		lastFood = includeFood;
+		lastPotions = includePotions;
 		return entries;
 	}
 
@@ -131,6 +147,6 @@ public class ConsumablesWidget implements HudWidget {
 		return (includeFood && isFood) || (includePotions && isPotion);
 	}
 
-	private record Entry(Item item, int count) {
+	private record Entry(Item item, int count, ItemStack stack) {
 	}
 }

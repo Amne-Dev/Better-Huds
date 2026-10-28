@@ -12,7 +12,7 @@
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/better-huds/icon.png",
-	"environment": "*",
+	"environment": "client",
 	"entrypoints": {
 		"main": [
 			"amdev.bh.BetterHuds"

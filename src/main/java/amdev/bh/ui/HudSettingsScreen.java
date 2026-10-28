@@ -12,7 +12,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -186,7 +186,7 @@ public class HudSettingsScreen extends Screen {
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (event.button() == KeyCodes.MOUSE_BUTTON_LEFT) {
 			if (sortDropdownOpen) {
 				int hit = dropdownOptionAt(sortDropdownButton, event.x(), event.y(), WidgetSort.values().length);
 				if (hit >= 0) {
@@ -214,7 +214,7 @@ public class HudSettingsScreen extends Screen {
 			}
 		}
 
-		if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+		if (event.button() == KeyCodes.MOUSE_BUTTON_RIGHT) {
 			ProfileBounds hit = profileAt(event.x(), event.y());
 			if (hit != null) {
 				profileMenuVisible = true;
@@ -227,7 +227,7 @@ public class HudSettingsScreen extends Screen {
 			profileMenuIndex = -1;
 		}
 
-		if (profileMenuVisible && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (profileMenuVisible && event.button() == KeyCodes.MOUSE_BUTTON_LEFT) {
 			int menuWidth = 116;
 			int menuHeight = 56;
 			int menuX = clamp(profileMenuX, panelX + 2, panelX + panelWidth - menuWidth - 2);

@@ -43,7 +43,17 @@ public class ProfileImportScreen extends Screen {
 		setInitialFocus(inputBox);
 
 		addRenderableWidget(new GlassButton(panelX + panelWidth - 90, panelY + 10, 78, 20, Component.translatable("screen.better-huds.back"), button -> onClose()));
+		addRenderableWidget(new GlassButton(panelX + 14, panelY + panelHeight - 30, 140, 20, Component.translatable("screen.better-huds.settings.paste_clipboard"), button -> pasteFromClipboard()));
 		addRenderableWidget(new GlassButton(panelX + panelWidth - 94, panelY + panelHeight - 30, 82, 20, Component.translatable("screen.better-huds.settings.import_profile"), button -> tryImport()));
+	}
+
+	private void pasteFromClipboard() {
+		if (minecraft != null && minecraft.keyboardHandler != null) {
+			String clipboard = minecraft.keyboardHandler.getClipboard();
+			if (clipboard != null && !clipboard.isBlank()) {
+				inputBox.setValue(clipboard.trim());
+			}
+		}
 	}
 
 	private void tryImport() {

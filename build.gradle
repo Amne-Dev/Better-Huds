@@ -10,7 +10,7 @@ def sanitizeLabel = { String raw ->
 }
 
 def buildMinecraftVersion = project.minecraft_version.toString()
-def supportedMinecraftVersions = ['1.21', '1.21.8', '1.21.11', '26.1', '26.2']
+def supportedMinecraftVersions = ['1.21', '1.21.2', '1.21.3', '1.21.4', '1.21.5', '1.21.6', '1.21.7', '1.21.8', '1.21.11', '26.1', '26.2', '26.3']
 if (!supportedMinecraftVersions.contains(buildMinecraftVersion)) {
 	throw new GradleException("Unsupported Minecraft version '${buildMinecraftVersion}'. Supported versions: ${supportedMinecraftVersions.join(', ')}")
 }
@@ -21,10 +21,17 @@ def buildDependencyRange = (findProperty("mc_dependency_range") ?: buildMinecraf
 def buildVersionLabel = sanitizeLabel((findProperty("build_version_label") ?: buildMinecraftVersion).toString())
 def minimumFabricLoaderVersions = [
 	'1.21': '0.16.14',
+	'1.21.2': '0.16.14',
+	'1.21.3': '0.16.14',
+	'1.21.4': '0.16.14',
+	'1.21.5': '0.16.14',
+	'1.21.6': '0.16.14',
+	'1.21.7': '0.16.14',
 	'1.21.8': '0.16.14',
 	'1.21.11': '0.17.3',
 	'26.1': '0.18.4',
-	'26.2': '0.18.4'
+	'26.2': '0.18.4',
+	'26.3': '0.18.4'
 ]
 def minimumFabricLoaderVersion = minimumFabricLoaderVersions[buildMinecraftVersion]
 def fabricLoaderDependencyRange = (findProperty("fabric_loader_dependency") ?: ">=${minimumFabricLoaderVersion}").toString()
@@ -33,7 +40,8 @@ def javaDependencyRange = (findProperty("java_dependency") ?: (buildMinecraftVer
 def archiveCompatLabel = sanitizeLabel(buildCompatGroup)
 def javaLanguageVersion = JavaVersion.toVersion(buildMinecraftVersion.startsWith("26.") ? 25 : 21)
 
-version = "${project.mod_version}+mc${buildVersionLabel}"
+def buildModVersion = (findProperty("mod_version") ?: project.mod_version).toString()
+version = "${buildModVersion}+mc${buildVersionLabel}"
 group = project.maven_group
 
 base {

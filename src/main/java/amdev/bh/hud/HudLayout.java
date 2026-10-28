@@ -24,66 +24,54 @@ public final class HudLayout {
 		int scaledWidth = Math.max(1, Math.round(widgetWidth * appliedScale));
 		int scaledHeight = Math.max(1, Math.round(widgetHeight * appliedScale));
 
-		float anchorX;
-		float anchorY;
-
 		Anchor anchor = widgetConfig.anchor == null ? Anchor.TOP_LEFT : widgetConfig.anchor;
-		switch (anchor) {
-			case TOP_LEFT -> {
-				anchorX = 0;
-				anchorY = 0;
-			}
-			case TOP_CENTER -> {
-				anchorX = (screenWidth / 2.0F) - scaledReferenceX;
-				anchorY = 0;
-			}
-			case TOP_RIGHT -> {
-				anchorX = screenWidth - scaledWidthF;
-				anchorY = 0;
-			}
-			case CENTER_LEFT -> {
-				anchorX = 0;
-				anchorY = (screenHeight / 2.0F) - scaledReferenceY;
-			}
-			case CENTER -> {
-				anchorX = (screenWidth / 2.0F) - scaledReferenceX;
-				anchorY = (screenHeight / 2.0F) - scaledReferenceY;
-			}
-			case CENTER_RIGHT -> {
-				anchorX = screenWidth - scaledWidthF;
-				anchorY = (screenHeight / 2.0F) - scaledReferenceY;
-			}
-			case BOTTOM_LEFT -> {
-				anchorX = 0;
-				anchorY = screenHeight - scaledHeightF;
-			}
-			case BOTTOM_CENTER -> {
-				anchorX = (screenWidth / 2.0F) - scaledReferenceX;
-				anchorY = screenHeight - scaledHeightF;
-			}
-			case BOTTOM_RIGHT -> {
-				anchorX = screenWidth - scaledWidthF;
-				anchorY = screenHeight - scaledHeightF;
-			}
-			default -> {
-				anchorX = 0;
-				anchorY = 0;
-			}
-		}
+		float anchorX = getAnchorBaseX(anchor, screenWidth, scaledWidthF, scaledReferenceX);
+		float anchorY = getAnchorBaseY(anchor, screenHeight, scaledHeightF, scaledReferenceY);
 
 		int x = Math.round(anchorX) + widgetConfig.x;
 		int y = Math.round(anchorY) + widgetConfig.y;
-
-		if (config.snapToGrid) {
-			int grid = config.getGridSizeOrDefault();
-			x = snap(x, grid);
-			y = snap(y, grid);
-		}
 
 		x = Math.max(0, Math.min(Math.max(0, screenWidth - scaledWidth), x));
 		y = Math.max(0, Math.min(Math.max(0, screenHeight - scaledHeight), y));
 
 		return new ResolvedWidget(widget, widgetConfig, x, y, widgetWidth, widgetHeight, appliedScale, referenceX, referenceY);
+	}
+
+	public static float getAnchorBaseX(Anchor anchor, int screenWidth, float scaledWidthF, float scaledReferenceX) {
+		return switch (anchor) {
+			case TOP_CENTER, CENTER, BOTTOM_CENTER -> (screenWidth / 2.0F) - scaledReferenceX;
+			case TOP_RIGHT, CENTER_RIGHT, BOTTOM_RIGHT -> screenWidth - scaledWidthF;
+			default -> 0.0F;
+		};
+	}
+
+	public static float getAnchorBaseY(Anchor anchor, int screenHeight, float scaledHeightF, float scaledReferenceY) {
+		return switch (anchor) {
+			case CENTER_LEFT, CENTER, CENTER_RIGHT -> (screenHeight / 2.0F) - scaledReferenceY;
+			case BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT -> screenHeight - scaledHeightF;
+			default -> 0.0F;
+		};
+	}
+
+	public static Anchor getClosestAnchor(int screenX, int screenY, int scaledWidth, int scaledHeight, int screenWidth, int screenHeight) {
+		float centerX = screenX + (scaledWidth / 2.0F);
+		float centerY = screenY + (scaledHeight / 2.0F);
+
+		float colSplit1 = screenWidth / 3.0F;
+		float colSplit2 = (screenWidth * 2.0F) / 3.0F;
+		float rowSplit1 = screenHeight / 3.0F;
+		float rowSplit2 = (screenHeight * 2.0F) / 3.0F;
+
+		int col = centerX < colSplit1 ? 0 : (centerX > colSplit2 ? 2 : 1);
+		int row = centerY < rowSplit1 ? 0 : (centerY > rowSplit2 ? 2 : 1);
+
+		if (row == 0) {
+			return col == 0 ? Anchor.TOP_LEFT : (col == 1 ? Anchor.TOP_CENTER : Anchor.TOP_RIGHT);
+		} else if (row == 1) {
+			return col == 0 ? Anchor.CENTER_LEFT : (col == 1 ? Anchor.CENTER : Anchor.CENTER_RIGHT);
+		} else {
+			return col == 0 ? Anchor.BOTTOM_LEFT : (col == 1 ? Anchor.BOTTOM_CENTER : Anchor.BOTTOM_RIGHT);
+		}
 	}
 
 	public static int snap(int value, int gridSize) {

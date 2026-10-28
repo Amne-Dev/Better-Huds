@@ -82,10 +82,10 @@ public class KeystrokesWidget implements HudWidget {
 		int wide = (size * 3) + (gap * 2);
 		int rowY = y + pad;
 		int leftX = x + pad;
-		String wLabel = showText ? (symbolLabels ? "\u25B2" : "W") : "";
-		String aLabel = showText ? (symbolLabels ? "\u25C0" : "A") : "";
-		String sLabel = showText ? (symbolLabels ? "\u25BC" : "S") : "";
-		String dLabel = showText ? (symbolLabels ? "\u25B6" : "D") : "";
+		String wLabel = showText ? (symbolLabels ? "\u25B2" : options.keyUp.getTranslatedKeyMessage().getString()) : "";
+		String aLabel = showText ? (symbolLabels ? "\u25C0" : options.keyLeft.getTranslatedKeyMessage().getString()) : "";
+		String sLabel = showText ? (symbolLabels ? "\u25BC" : options.keyDown.getTranslatedKeyMessage().getString()) : "";
+		String dLabel = showText ? (symbolLabels ? "\u25B6" : options.keyRight.getTranslatedKeyMessage().getString()) : "";
 
 		int centerX = leftX + size + gap;
 		drawKey(graphics, client, centerX, rowY, size, size, wLabel, null, false, keyDown(options.keyUp), neon, keyBgEnabled, keyBgColor, pressedBgColor, textColor, pressedTextColor);

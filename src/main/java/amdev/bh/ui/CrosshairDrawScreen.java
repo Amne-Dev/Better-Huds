@@ -9,7 +9,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import amdev.bh.util.KeyCodes;
 
 public class CrosshairDrawScreen extends Screen {
 	private final HudSystem hudSystem;
@@ -86,7 +86,7 @@ public class CrosshairDrawScreen extends Screen {
 		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
-		if (event.button() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (event.button() != KeyCodes.MOUSE_BUTTON_LEFT) {
 			return false;
 		}
 		boolean handled = applyToolAt(event.x(), event.y());
@@ -96,7 +96,7 @@ public class CrosshairDrawScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
-		if (painting && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+		if (painting && event.button() == KeyCodes.MOUSE_BUTTON_LEFT) {
 			return applyToolAt(event.x(), event.y());
 		}
 		return super.mouseDragged(event, dragX, dragY);
